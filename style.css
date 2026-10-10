@@ -1,0 +1,634 @@
+/*Liquid Glass — iOS 26 / Apple Liquid Glass (performance-tuned)
+   Key principles:
+   - NO visible hard borders. Glass edges are defined only by
+     refraction, specular edge glow and shadow, exactly like iOS 26.
+   - Specular highlight: a radial-gradient "sheen" that shifts with
+     the mouse via --mx / --my (set in site.js).
+   - Depth: soft outer drop-shadow (not a border) beneath every surface.
+   - Active tab / selected state: a brighter inner surface, not a border.
+   - font: SF Pro on Apple devices, Inter elsewhere*/
+
+:root {
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --text: #fff;
+  --muted: rgba(255, 255, 255, .72);
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  /*Noise grain: very subtle, adds physical glass texture*/
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding-top: 92px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.5;
+  letter-spacing: -.011em;
+  text-shadow: 0 1px 8px rgba(8, 36, 70, .2);
+  background: #9cc3d0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+
+/*wallpaper*/
+.wall { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: linear-gradient(160deg, #bcd9e2, #8fbccb 60%, #6fa5bd); }
+.blob { position: absolute; border-radius: 50%; }
+.b3 { width: 72vmax; height: 72vmax; left: -28vmax; top: -32vmax;
+  background: radial-gradient(circle at 62% 62%, #e2f1f5 0%, #a9d0dc 55%, #7fb4c6 100%); }
+.b2 { width: 104vmax; height: 104vmax; left: -64vmax; bottom: -68vmax;
+  background: radial-gradient(circle at 76% 16%, #c9f8ea 0%, #72ddc5 32%, #31b3a4 68%, #1b8892 100%); }
+.b1 { width: 92vmax; height: 92vmax; right: -38vmax; top: -36vmax;
+  background: radial-gradient(circle at 26% 80%, #8fa9f6 0%, #4263e2 36%, #1f33aa 70%, #0d1b6c 100%); }
+.b4 { width: 58vmax; height: 58vmax; right: -24vmax; bottom: -28vmax;
+  background: radial-gradient(circle at 30% 28%, #86d6ff 0%, #3590f6 52%, #1747c9 100%); }
+.scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8, 34, 68, .28), rgba(8, 34, 68, .22)); }
+.wall::after {
+  content: ""; position: absolute; inset: 0; background-image: var(--noise); opacity: .07;
+}
+
+.page { position: relative; z-index: 1; min-height: calc(100vh - 92px); display: flex; flex-direction: column; }
+.wrap { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 22px; }
+main { flex: 1; }
+
+/*THE GLASS MATERIAL — iOS 26 Liquid Glass recipe
+   No hard border. Edge definition comes from:
+     1. Specular edge glow  →  inset box-shadow with large blur
+     2. Surface sheen       →  radial-gradient chasing the mouse
+     3. Outer shadow        →  elevation / depth*/
+.glass {
+  position: relative;
+  /* Surface: frosted, slightly warm tint + mouse-tracking specular */
+  background:
+    /* mouse-tracking specular "hot spot" */
+    radial-gradient(280px circle at var(--mx, 50%) var(--my, -20%),
+      rgba(255, 255, 255, .28) 0%,
+      transparent 60%),
+    /* diagonal base sheen — top-left lit, like visionos */
+    linear-gradient(
+      130deg,
+      rgba(255, 255, 255, .30) 0%,
+      rgba(255, 255, 255, .08) 38%,
+      rgba(255, 255, 255, .16) 70%,
+      rgba(255, 255, 255, .06) 100%
+    ),
+    /* body fill */
+    rgba(38, 70, 102, .18);
+
+  -webkit-backdrop-filter: blur(20px) saturate(190%) brightness(1.06);
+  backdrop-filter: blur(20px) saturate(190%) brightness(1.06);
+
+  /* Shadows:
+       - specular top-left edge glow (replaces border)
+       - soft inner ambient (gives thickness)
+       - soft outer drop shadow (elevation)
+       - subtle bottom-edge darkening (ground shadow, like iOS dock)*/
+  box-shadow:
+    /* top-left specular edge — the "glass rim" */
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .85),
+    /* right/bottom inner darkening */
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .08),
+    /* soft inner ambient glow */
+    inset 0 0 32px rgba(255, 255, 255, .08),
+    /* outer elevation shadow */
+    0 8px 32px rgba(6, 24, 54, .28),
+    0 2px 8px rgba(6, 24, 54, .14);
+}
+
+/* Noise micro-texture on glass surfaces — tiny grain, like polished glass */
+.glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--noise);
+  opacity: .045;
+  pointer-events: none;
+}
+
+/* lightweight glass for many small tiles (no live backdrop-filter for perf)*/
+.lite {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, .34) 0%,
+      rgba(255, 255, 255, .10) 50%,
+      rgba(255, 255, 255, .18) 100%
+    ),
+    rgba(48, 82, 114, .24);
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .80),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .07),
+    0 4px 18px rgba(6, 24, 54, .22),
+    0 1px 4px rgba(6, 24, 54, .12);
+}
+
+/* squircle app-icon tiles */
+.icon-sq {
+  width: 60px; height: 60px; display: grid; place-items: center; border-radius: 18px; margin-bottom: 14px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .36), rgba(255, 255, 255, .10));
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .80),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .08),
+    0 4px 16px rgba(6, 24, 54, .20),
+    0 1px 4px rgba(6, 24, 54, .10);
+  transition: transform .5s var(--spring);
+}
+.icon-sq svg { width: 30px; height: 30px; fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* FLOATING NAV CAPSULE
+   iOS 26: nav bar is a free-floating pill, no border, pure glass.
+   The "active" link gets a brighter inset surface, not an outline.*/
+.topnav { position: fixed; top: 14px; left: 0; right: 0; z-index: 50; display: flex; justify-content: center; pointer-events: none; padding: 0 12px; }
+.nav-pill {
+  pointer-events: auto; display: flex; align-items: center; gap: 4px;
+  padding: 7px 8px 7px 16px; border-radius: 999px;
+  transition: transform .6s var(--spring), padding .5s var(--ease);
+  animation: dropIn .9s var(--spring) backwards;
+}
+.logo { display: flex; align-items: center; gap: 9px; text-decoration: none; font-weight: 650; letter-spacing: -.02em; margin-right: 10px; transition: margin .5s var(--ease); }
+.logo .mark {
+  width: 22px; height: 22px; border-radius: 50%; flex: none;
+  background: radial-gradient(circle at 30% 25%, #fff, rgba(255, 255, 255, .55) 42%, rgba(255, 255, 255, .15));
+  box-shadow: inset 0 -2px 5px rgba(20, 60, 100, .3), 0 2px 8px rgba(6, 24, 54, .22);
+}
+.logo .text { display: inline-block; white-space: nowrap; max-width: 240px; overflow: hidden; transition: max-width .55s var(--ease), opacity .3s; }
+.topnav.compact .nav-pill { transform: scale(.94); padding-left: 10px; }
+.topnav.compact .logo { margin-right: 4px; }
+.topnav.compact .logo .text { max-width: 0; opacity: 0; }
+.nav-pill nav { display: flex; gap: 2px; }
+.nav-pill nav a {
+  text-decoration: none; color: var(--muted); font-weight: 500; font-size: 15px;
+  padding: 8px 16px; border-radius: 999px;
+  transition: color .25s, background .25s, box-shadow .25s, transform .35s var(--spring);
+}
+.nav-pill nav a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, .16);
+  transform: translateY(-1px);
+}
+/* Active nav item: brighter inset fill, no border */
+.nav-pill nav a.active {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .38) 0%, rgba(255, 255, 255, .18) 100%);
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .90),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .06),
+    0 3px 12px rgba(6, 24, 54, .20);
+}
+
+/* HERO SECTION */
+.hero { text-align: center; padding: 44px 0 10px; }
+.hero h1 {
+  margin: 0 0 18px; font-size: clamp(40px, 8.5vw, 78px); font-weight: 700; letter-spacing: -.045em; line-height: 1.02;
+  text-shadow: 0 2px 28px rgba(8, 40, 80, .35);
+  animation: blurIn 1s var(--ease) backwards;
+}
+.hero p.sub { max-width: 700px; margin: 0 auto 40px; font-size: 19px; color: rgba(255, 255, 255, .86); animation: blurIn 1s .12s var(--ease) backwards; }
+
+.buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
+
+/*All buttons: glass pill with specular edge glow, no border*/
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+  min-width: 230px; padding: 15px 30px; border-radius: 999px;
+  font-size: 18px; font-weight: 600; line-height: 1.2; text-align: left; text-decoration: none; color: #fff;
+  transition: transform .45s var(--spring), box-shadow .35s;
+}
+.hero .btn { animation: riseIn .9s var(--ease) backwards; }
+.hero .btn:nth-child(1) { animation-delay: .2s; }
+.hero .btn:nth-child(2) { animation-delay: .3s; }
+.hero .btn:nth-child(3) { animation-delay: .4s; }
+.btn .ic { width: 22px; height: 22px; flex: none; display: block; }
+.btn .lbl { display: flex; flex-direction: column; }
+.btn small { font-size: 13.5px; font-weight: 500; opacity: .8; }
+.btn:hover {
+  transform: translateY(-5px) scale(1.03);
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .90),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .06),
+    0 18px 44px rgba(6, 24, 54, .36),
+    0 6px 16px rgba(6, 24, 54, .22);
+}
+.btn:active { transform: scale(.96); transition-duration: .15s; }
+
+/* Prime CTA button — "white frosted glass" like iOS call-to-action pills.
+   Same glass language as everything else, just much brighter surface tint.
+   Dark text for contrast (same as Apple's primary CTA). */
+.btn.prime {
+  color: #0b2442;
+  text-shadow: none;
+  background:
+    linear-gradient(
+      130deg,
+      rgba(255, 255, 255, .92) 0%,
+      rgba(255, 255, 255, .68) 45%,
+      rgba(255, 255, 255, .82) 100%
+    );
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .95),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .04),
+    0 8px 28px rgba(6, 24, 54, .24),
+    0 2px 8px rgba(6, 24, 54, .14);
+}
+.btn.prime:hover {
+  background:
+    linear-gradient(
+      130deg,
+      rgba(255, 255, 255, .98) 0%,
+      rgba(255, 255, 255, .75) 45%,
+      rgba(255, 255, 255, .90) 100%
+    );
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, 1),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .04),
+    0 20px 50px rgba(6, 24, 54, .36),
+    0 6px 18px rgba(6, 24, 54, .20);
+}
+
+.btn.dim { --o: .82; opacity: var(--o); }
+
+/* WIDGETS — like iOS home-screen widgets.
+   Hover: lift + brighter specular (spring bounce).*/
+.widgets { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 16px; max-width: 880px; margin: 58px auto 0; text-align: left; }
+.widget {
+  display: flex; flex-direction: column; justify-content: space-between;
+  min-height: 176px; padding: 20px 24px 22px; border-radius: 36px;
+  transition: transform .5s var(--spring), box-shadow .4s;
+}
+.widget:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .90),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .07),
+    0 22px 52px rgba(6, 24, 54, .36),
+    0 6px 18px rgba(6, 24, 54, .20);
+}
+.widget .w-label { font-size: 16px; font-weight: 600; color: var(--muted); }
+.widget .w-num { display: block; font-size: 76px; font-weight: 600; letter-spacing: -.05em; line-height: 1; text-shadow: 0 2px 20px rgba(8, 40, 80, .28); }
+.widget.wide .w-num { font-size: clamp(62px, 8vw, 84px); }
+.widget .w-sub { font-size: 15px; color: var(--muted); }
+
+/*SECTIONS*/
+section { padding: 60px 0 4px; }
+section h2 { margin: 0 0 16px; font-size: 32px; font-weight: 700; letter-spacing: -.03em; }
+.panel { padding: 30px 32px; border-radius: 36px; }
+.panel p { margin: 0; max-width: 860px; color: rgba(255, 255, 255, .92); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+.card {
+  padding: 24px; border-radius: 34px;
+  transition: transform .5s var(--spring), box-shadow .4s;
+}
+.card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .90),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .07),
+    0 22px 52px rgba(6, 24, 54, .36),
+    0 6px 18px rgba(6, 24, 54, .20);
+}
+.card:hover .icon-sq { transform: scale(1.1) rotate(-4deg); }
+.card h3 { margin: 0 0 6px; font-size: 20px; font-weight: 650; letter-spacing: -.02em; }
+.card p { margin: 0; color: var(--muted); font-size: 15.5px; }
+
+.cta { text-align: center; padding-top: 68px; }
+.cta p { color: var(--muted); max-width: 560px; margin: 0 auto 24px; }
+
+/*CATALOG — segmented control, search, version tiles*/
+.page-head { text-align: center; padding: 28px 0 8px; }
+.page-head h1 { margin: 0 0 8px; font-size: clamp(36px, 7vw, 60px); font-weight: 700; letter-spacing: -.045em; text-shadow: 0 2px 28px rgba(8, 40, 80, .35); animation: blurIn .9s var(--ease) backwards; }
+.page-head p { margin: 0; color: rgba(255, 255, 255, .86); animation: blurIn .9s .1s var(--ease) backwards; }
+
+.tabs { display: flex; justify-content: center; margin: 32px 0 26px; }
+
+/* Segmented control: no border — the container is pure glass; the
+   active "lens" inside is a brighter glass puck. iOS 26 style. */
+.segmented {
+  position: relative; display: inline-flex; max-width: 100%; overflow-x: auto; scrollbar-width: none;
+  padding: 5px; border-radius: 999px; animation: riseIn .9s .2s var(--ease) backwards;
+}
+.segmented::-webkit-scrollbar { display: none; }
+
+/* The sliding "selected" puck — bright inner glass, no border */
+.seg-lens {
+  position: absolute; top: 5px; bottom: 5px; left: 0; width: 0; border-radius: 999px; z-index: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .56) 0%, rgba(255, 255, 255, .28) 100%);
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .92),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .05),
+    0 4px 18px rgba(6, 24, 54, .26),
+    0 1px 5px rgba(6, 24, 54, .14);
+  transition: transform .6s var(--spring), width .6s var(--spring);
+}
+
+.tab {
+  position: relative; z-index: 1; flex: none;
+  font: inherit; font-weight: 600; font-size: 16px; color: var(--muted); white-space: nowrap; text-shadow: inherit;
+  background: none; border: 0; cursor: pointer; padding: 11px 22px; border-radius: 999px;
+  transition: color .3s, transform .4s var(--spring);
+}
+.tab:hover { color: #fff; transform: translateY(-1px); }
+.tab:active { transform: scale(.94); }
+.tab[aria-selected="true"] { color: #fff; }
+
+.panel-head { text-align: center; margin-bottom: 20px; }
+.panel-head h2 { margin: 0; font-size: 30px; }
+.panel-head p { margin: 4px 0 0; color: var(--muted); font-size: 16px; }
+
+/* Search: glass pill, focus ring is a brighter specular glow (no colored outline) */
+.search-wrap {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; max-width: 440px; margin: 0 auto 30px; padding: 0 20px; border-radius: 999px;
+  transition: transform .5s var(--spring), box-shadow .3s;
+}
+.search-wrap:focus-within {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .92),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .05),
+    0 0 0 3px rgba(255, 255, 255, .30),
+    0 16px 44px rgba(6, 24, 54, .32),
+    0 4px 12px rgba(6, 24, 54, .18);
+}
+.search-wrap svg { width: 18px; height: 18px; flex: none; opacity: .8; }
+.search-wrap input { flex: 1; min-width: 0; padding: 14px 0; font: inherit; font-size: 16px; color: #fff; background: transparent; border: 0; outline: none; }
+.search-wrap input::placeholder { color: rgba(255, 255, 255, .6); }
+
+.group { margin-bottom: 28px; }
+.group h3 { margin: 0 0 12px 6px; font-size: 13px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.versions { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+
+/* Version tiles: lite glass, spring hover lift */
+.ver {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 13px 14px 13px 18px; border-radius: 22px; text-decoration: none; font-weight: 600;
+  animation: pop .5s var(--ease) backwards; animation-delay: calc(var(--i) * 24ms);
+  transition: transform .4s var(--spring), box-shadow .35s;
+}
+.still .ver { animation: none; }
+.ver:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .90),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .06),
+    0 16px 36px rgba(6, 24, 54, .30),
+    0 4px 12px rgba(6, 24, 54, .16);
+}
+.ver:active { transform: scale(.96); }
+
+/* Download arrow circle */
+.ver .go {
+  width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; flex: none; font-size: 13px;
+  background: rgba(255, 255, 255, .22);
+  box-shadow: inset 0.5px 0.5px 0 rgba(255, 255, 255, .70), 0 1px 4px rgba(6, 24, 54, .15);
+  transition: background .3s, color .3s, transform .4s var(--spring), box-shadow .3s;
+}
+.ver:hover .go {
+  background: rgba(255, 255, 255, .92);
+  color: #0b2442; text-shadow: none;
+  transform: translateY(2px);
+  box-shadow: 0 4px 12px rgba(6, 24, 54, .22);
+}
+.ver.off { cursor: default; }
+.ver.off .go { opacity: .45; }
+.ver.off span:first-child { opacity: .65; }
+.ver.off:hover { transform: none; box-shadow: none; }
+.ver.off:hover .go { background: rgba(255, 255, 255, .22); color: inherit; transform: none; box-shadow: inset 0.5px 0.5px 0 rgba(255, 255, 255, .70); }
+.empty { text-align: center; color: var(--muted); padding: 34px 0; }
+
+/* mod author buttons (catalog) */
+.authors { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 34px; }
+.btn.author { min-width: 0; padding: 12px 26px 12px 20px; font-size: 17px; }
+.btn.author .ic { width: 26px; height: 26px; }
+.btn.author small { font-size: 13px; }
+
+/* FOOTER — note pill + social dock*/
+footer { margin-top: 76px; padding: 0 0 30px; }
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; }
+.foot .note { display: inline-block; max-width: 100%; padding: 15px 24px; border-radius: 999px; color: var(--muted); font-size: 15px; line-height: 22px; white-space: nowrap; }
+/* rotating note: the clip box animates to the size of the current text */
+.note-clip { display: block; overflow: hidden; transition: width .7s var(--ease), height .7s var(--ease); }
+.note-text { display: block; width: max-content; white-space: nowrap; }
+
+/* creator notice (home page) */
+.creator { max-width: 760px; margin: 0 auto 22px; padding: 22px 30px; border-radius: 32px; text-align: center; color: rgba(255, 255, 255, .92); font-size: 15.5px; }
+.creator b { display: block; margin-bottom: 4px; font-size: 18px; font-weight: 650; letter-spacing: -.02em; color: #fff; }
+.creator a { font-weight: 600; text-underline-offset: 3px; }
+
+/* Social dock: each icon is its own glass puck, the dock is the container */
+.dock { display: flex; gap: 10px; padding: 9px; border-radius: 32px; }
+.dock a {
+  width: 48px; height: 48px; display: grid; place-items: center; border-radius: 15px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .10));
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .78),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .07),
+    0 3px 12px rgba(6, 24, 54, .20),
+    0 1px 4px rgba(6, 24, 54, .10);
+  transition: transform .45s var(--spring), box-shadow .35s;
+}
+.dock a:hover {
+  transform: translateY(-8px) scale(1.16);
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, .90),
+    inset -0.5px -0.5px 0 rgba(0, 0, 0, .05),
+    0 18px 36px rgba(6, 24, 54, .32),
+    0 4px 12px rgba(6, 24, 54, .18);
+}
+.dock a:active { transform: scale(.92); }
+.dock img { width: 22px; height: 22px; display: block; }
+
+/*ANIMATIONS*/
+@keyframes riseIn { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: var(--o, 1); transform: none; } }
+@keyframes blurIn { from { opacity: 0; transform: translateY(18px); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes dropIn { from { opacity: 0; transform: translateY(-30px) scale(.92); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0; transform: scale(.88) translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Scroll reveal */
+.js .reveal:not(.in) { opacity: 0; }
+.reveal.in { animation: riseIn .8s var(--ease) backwards; animation-delay: var(--d, 0ms); }
+
+/* FALLBACKS*/
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass { background: rgba(46, 80, 116, .88); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass { background: rgba(46, 80, 116, .94); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* RESPONSIVE */
+@media (max-width: 760px) {
+  body { padding-top: 84px; }
+  .glass { -webkit-backdrop-filter: blur(14px) saturate(170%); backdrop-filter: blur(14px) saturate(170%); }
+  .widgets { grid-template-columns: 1fr; }
+  .widget { min-height: 150px; }
+  .btn { min-width: 100%; }
+  .btn.author { min-width: 0; }
+  .foot .note { padding: 13px 16px; }
+  .creator { padding: 20px 22px; border-radius: 28px; }
+  .panel { padding: 24px 22px; border-radius: 30px; }
+  .logo .text { display: none; }
+  .foot { justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .js .reveal:not(.in) { opacity: 1; }
+}
+
+
+/*FINAL POLISH LAYER — hover stability + deeper Liquid Glass
+  (loaded last on purpose: it supersedes the older hover/shadow rules above) */
+:root {
+  --spring: cubic-bezier(.3, 1.22, .5, 1); /* softer overshoot: no edge jitter */
+  --noise-soft: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  /* Glass thickness: soft top lip, cyan/magenta edge dispersion, bounce light from below */
+  --inner:
+    inset 0 1px 0 rgba(255, 255, 255, .38),
+    inset 0 0 0 1px rgba(255, 255, 255, .05),
+    inset 3px 3px 9px -4px rgba(170, 236, 255, .50),
+    inset -3px -3px 9px -4px rgba(255, 186, 232, .40),
+    inset 0 -16px 26px -12px rgba(255, 255, 255, .18),
+    inset 0 0 30px rgba(255, 255, 255, .07);
+  --inner-s:
+    inset 0 1px 0 rgba(255, 255, 255, .55),
+    inset 2px 2px 5px -3px rgba(170, 236, 255, .55),
+    inset -2px -2px 5px -3px rgba(255, 186, 232, .42),
+    inset 0 -7px 10px -5px rgba(255, 255, 255, .16);
+  --elev-1: 0 10px 30px rgba(6, 24, 54, .26), 0 2px 8px rgba(6, 24, 54, .14);
+  --elev-2: 0 24px 54px rgba(6, 24, 54, .36), 0 6px 18px rgba(6, 24, 54, .20);
+  --elev-s: 0 4px 14px rgba(6, 24, 54, .20), 0 1px 4px rgba(6, 24, 54, .10);
+}
+
+/* NO MORE HOVER FLICKER */
+.glass, .lite { --reach: 0px; }
+.widget, .card { --reach: 18px; }
+.btn           { --reach: 14px; }
+.ver           { --reach: 10px; }
+.lite { position: relative; isolation: isolate; }
+
+.glass::after, .lite::after {
+  content: ""; position: absolute; z-index: -1;
+  top: 0; left: 0; right: 0; bottom: calc(var(--reach) * -1);
+  background: none; opacity: 1; border-radius: inherit; pointer-events: auto;
+}
+.dock a { position: relative; }
+.dock a::after { content: ""; position: absolute; inset: -4px -4px -24px; }
+
+.widget, .card, .btn, .ver, .dock a { will-change: transform; backface-visibility: hidden; }
+
+/* disabled tiles used to lose their whole shadow on hover (a visible pop) */
+.ver.off:hover { box-shadow: var(--inner-s), var(--elev-s); }
+
+/*LIQUID GLASS */
+.glass {
+  background:
+    radial-gradient(340px circle at var(--mx, 50%) var(--my, -30%), rgba(255, 255, 255, .26), transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, .20) 0%, rgba(255, 255, 255, .04) 38%, transparent 58%),
+    linear-gradient(130deg, rgba(255, 255, 255, .26) 0%, rgba(255, 255, 255, .05) 38%, rgba(255, 255, 255, .12) 70%, rgba(255, 255, 255, .05) 100%),
+    var(--noise-soft),
+    rgba(38, 70, 102, .18);
+  -webkit-backdrop-filter: blur(22px) saturate(210%) brightness(1.08);
+  backdrop-filter: blur(22px) saturate(210%) brightness(1.08);
+}
+.lite {
+  background:
+    radial-gradient(220px circle at var(--mx, 50%) var(--my, -30%), rgba(255, 255, 255, .24), transparent 65%),
+    linear-gradient(180deg, rgba(255, 255, 255, .22) 0%, rgba(255, 255, 255, .05) 45%, rgba(255, 255, 255, .10) 100%),
+    var(--noise-soft),
+    rgba(48, 82, 114, .24);
+}
+
+/* Specular rim: a 1px edge lit unevenly like real bevelled glass (bright top-left and
+   bottom-right, dark between) and it ignites right where the cursor is. */
+.glass::before, .lite::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background:
+    radial-gradient(160px circle at var(--mx, 50%) var(--my, -40%), rgba(255, 255, 255, .95), transparent 70%),
+    linear-gradient(135deg, rgba(255, 255, 255, .85) 0%, rgba(255, 255, 255, .14) 26%, rgba(255, 255, 255, .04) 50%, rgba(255, 255, 255, .14) 74%, rgba(255, 255, 255, .60) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+
+/* one shadow recipe everywhere: thickness + dispersion + elevation */
+.glass, .lite, .btn.prime, .btn.prime:hover { box-shadow: var(--inner), var(--elev-1); }
+.widget:hover, .card:hover, .btn:hover, .ver:hover, .btn.prime:hover { box-shadow: var(--inner), var(--elev-2); }
+.search-wrap:focus-within { box-shadow: var(--inner), 0 0 0 3px rgba(255, 255, 255, .28), var(--elev-2); }
+.icon-sq, .dock a, .ver .go { box-shadow: var(--inner-s), var(--elev-s); }
+.dock a:hover { box-shadow: var(--inner-s), var(--elev-2); }
+.ver:hover .go { box-shadow: var(--elev-s); }
+.ver.off:hover .go { box-shadow: var(--inner-s); }
+.seg-lens, .nav-pill nav a.active { box-shadow: var(--inner-s), var(--elev-s); }
+.seg-lens { box-shadow: var(--inner-s), 0 6px 20px rgba(6, 24, 54, .28); }
+
+/* nav links / tabs: no vertical movement (a 1px lift on a small target only jitters) */
+.nav-pill nav a:hover, .tab:hover { transform: none; }
+
+/* touch-down illumination, like pressing a glass key on iOS */
+.btn:not(.prime):active, .widget:active, .card:active { background-color: rgba(255, 255, 255, .20); }
+.ver:active { background-color: rgba(255, 255, 255, .20); }
+
+/* The wallpaper is static: no drifting blobs, so the glass never re-blurs a moving background. */
+
+
+/* LAST TWO TOUCHES */
+
+/* 1. "Browse the catalog": same liquid glass as its neighbours (no more white fill) */
+.btn.prime, .btn.prime:hover {
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(8, 36, 70, .2);
+  background:
+    radial-gradient(340px circle at var(--mx, 50%) var(--my, -30%), rgba(255, 255, 255, .26), transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, .20) 0%, rgba(255, 255, 255, .04) 38%, transparent 58%),
+    linear-gradient(130deg, rgba(255, 255, 255, .26) 0%, rgba(255, 255, 255, .05) 38%, rgba(255, 255, 255, .12) 70%, rgba(255, 255, 255, .05) 100%),
+    var(--noise-soft),
+    rgba(38, 70, 102, .18);
+}
+.btn.prime:active { background-color: rgba(255, 255, 255, .20); }
+
+/* 2. Version tiles: lift + swell, the glass lights up, the name leans in,
+      and the download arrow fills and keeps bobbing while you hover */
+.ver { transition: transform .45s var(--spring), box-shadow .35s, background-color .3s; }
+.ver:not(.off):hover {
+  transform: translateY(-6px) scale(1.045);
+  background-color: rgba(255, 255, 255, .14);
+}
+.ver:not(.off):active { transform: translateY(-1px) scale(.97); }
+.ver > span:first-child { transition: transform .45s var(--spring); }
+.ver:not(.off):hover > span:first-child { transform: translateX(4px); }
+.ver:not(.off):hover .go { animation: dlBob 1.1s ease-in-out infinite; }
+@keyframes dlBob {
+  0%, 100% { transform: translateY(-1px); }
+  50%      { transform: translateY(4px); }
+}
+
+
+/* DISCLAIMER PAGE */
+.panel.doc { max-width: 820px; margin: 30px auto 0; padding: 14px 34px; }
+.doc ol { list-style: none; counter-reset: sec; margin: 0; padding: 0; }
+.doc li { counter-increment: sec; position: relative; padding: 22px 0 22px 52px; }
+.doc li + li { box-shadow: 0 -1px 0 rgba(255, 255, 255, .14); }
+.doc li::before {
+  content: counter(sec); position: absolute; left: 0; top: 22px; width: 34px; height: 34px;
+  display: grid; place-items: center; border-radius: 11px; font-weight: 650; font-size: 16px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .36), rgba(255, 255, 255, .10));
+  box-shadow: var(--inner-s), var(--elev-s);
+}
+.doc h3 { margin: 0 0 6px; font-size: 20px; font-weight: 650; letter-spacing: -.02em; }
+.doc p { margin: 0; max-width: none; color: rgba(255, 255, 255, .9); font-size: 16px; overflow-wrap: anywhere; }
+.doc a { font-weight: 600; text-underline-offset: 3px; }
+@media (max-width: 760px) {
+  .panel.doc { padding: 6px 22px; }
+  .doc li { padding-left: 46px; }
+}

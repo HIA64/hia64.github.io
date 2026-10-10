@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#8fbccb">
+  <title>Catalog | Terraria Internet Archive</title>
+  <meta name="description" content="Browse archived versions of Calamity Mod, HERO's Mod, Calamity Mod Music and more.">
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wall" aria-hidden="true">
+  <i class="blob b3"></i><i class="blob b2"></i><i class="blob b1"></i><i class="blob b4"></i>
+  <div class="scrim"></div>
+</div>
+
+<header class="topnav">
+  <div class="nav-pill glass">
+    <a class="logo" href="index.html"><span class="mark"></span><span class="text">Terraria Internet Archive</span></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a class="active" href="catalog.html">Catalog</a>
+      <a href="disclaimer.html">Disclaimer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <main>
+    <div class="wrap">
+      <div class="page-head">
+        <h1>Archive Catalog</h1>
+        <p>Pick a project to see every version we have preserved.</p>
+      </div>
+
+      <div class="tabs">
+        <div class="segmented glass" role="tablist" id="tabs">
+          <span class="seg-lens" id="lens"></span>
+        </div>
+      </div>
+
+      <div class="panel-head">
+        <h2 id="panel-title"></h2>
+        <p id="panel-blurb"></p>
+      </div>
+
+      <label class="search-wrap glass">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="search" placeholder="Search a version, e.g. 1.1.7" autocomplete="off">
+      </label>
+
+      <div id="groups"></div>
+      <p class="empty" id="empty" hidden></p>
+      <div class="authors" id="authors"></div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="foot">
+        <span class="note glass" id="note"><span class="note-clip"><span class="note-text">Not affiliated with Re-Logic.</span></span></span>
+        <div class="dock glass">
+          <a href="https://www.youtube.com/@HIA64" aria-label="YouTube" title="YouTube"><img src="https://cdn.simpleicons.org/youtube/ffffff" alt="YouTube"></a>
+          <a href="https://discord.gg/8PgNAY9gZc" aria-label="Discord" title="Discord"><img src="https://cdn.simpleicons.org/discord/ffffff" alt="Discord"></a>
+          <a href="https://x.com/HIA64_TIA" aria-label="X (Twitter)" title="X (Twitter)"><img src="https://cdn.simpleicons.org/x/ffffff" alt="X"></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script src="data.js"></script>
+<script src="site.js"></script>
+<script>
+  /*The list of versions and links lives in data.js.*/
+  const tabsEl = document.getElementById("tabs");
+  const lensEl = document.getElementById("lens");
+  const groupsEl = document.getElementById("groups");
+  const emptyEl = document.getElementById("empty");
+  const searchEl = document.getElementById("search");
+  let current = "calamity";
+
+  function isPlaceholder(url) { return !url || url.trim() === "LINK"; }
+
+  function seriesOf(name) {
+    const m = name.match(/^v(\d+)\.(\d+)/);
+    return m ? "v" + m[1] + "." + m[2] + ".x" : "All";
+  }
+
+  function moveLens() {
+    const sel = tabsEl.querySelector('.tab[aria-selected="true"]');
+    if (!sel) return;
+    lensEl.style.width = sel.offsetWidth + "px";
+    lensEl.style.transform = "translateX(" + sel.offsetLeft + "px)";
+  }
+
+  // animate = true on first load and tab switch; false while typing in search
+  function render(animate) {
+    const cat = DATA[current];
+    document.getElementById("panel-title").textContent = cat.label;
+    document.getElementById("panel-blurb").textContent = cat.blurb;
+
+    tabsEl.querySelectorAll(".tab").forEach(t =>
+      t.setAttribute("aria-selected", t.dataset.key === current ? "true" : "false"));
+    moveLens();
+
+    const q = searchEl.value.trim().toLowerCase();
+    const list = cat.items.filter(v => v.name.toLowerCase().includes(q));
+    const grouped = {};
+    list.forEach(v => (grouped[seriesOf(v.name)] ||= []).push(v));
+
+    groupsEl.classList.toggle("still", !animate);
+    const frag = document.createDocumentFragment();
+    let i = 0;
+    Object.keys(grouped).forEach(series => {
+      const g = document.createElement("div");
+      g.className = "group";
+      const h = document.createElement("h3");
+      h.textContent = series;
+      const grid = document.createElement("div");
+      grid.className = "versions";
+      grouped[series].forEach(v => {
+        const a = document.createElement("a");
+        a.className = "ver lite";
+        if (isPlaceholder(v.url)) { a.classList.add("off"); a.setAttribute("aria-disabled", "true"); }
+        else { a.href = v.url; }
+        a.style.setProperty("--i", i++);
+        const name = document.createElement("span");
+        name.textContent = v.name;
+        const go = document.createElement("span");
+        go.className = "go";
+        go.textContent = "↓";
+        a.append(name, go);
+        grid.appendChild(a);
+      });
+      g.append(h, grid);
+      frag.appendChild(g);
+    });
+    groupsEl.replaceChildren(frag);
+
+    const authorsEl = document.getElementById("authors");
+    const authorNodes = (cat.authors || []).map(au => {
+      const a = document.createElement("a");
+      a.className = "btn glass author";
+      a.href = au.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      const ic = document.createElement("img");
+      ic.className = "ic";
+      ic.src = "https://cdn.simpleicons.org/github/ffffff";
+      ic.alt = "";
+      const lbl = document.createElement("span");
+      lbl.className = "lbl";
+      const small = document.createElement("small");
+      small.textContent = "Mod Author:";
+      const nm = document.createElement("span");
+      nm.textContent = au.name;
+      lbl.append(small, nm);
+      a.append(ic, lbl);
+      return a;
+    });
+    authorsEl.replaceChildren(...authorNodes);
+
+    if (list.length === 0) {
+      emptyEl.hidden = false;
+      emptyEl.textContent = cat.items.length === 0
+        ? "Coming soon. This section is being filled in."
+        : "No versions match your search.";
+    } else {
+      emptyEl.hidden = true;
+    }
+  }
+
+  Object.keys(DATA).forEach(key => {
+    const b = document.createElement("button");
+    b.className = "tab";
+    b.setAttribute("role", "tab");
+    b.dataset.key = key;
+    b.textContent = DATA[key].label;
+    b.addEventListener("click", () => {
+      current = key;
+      searchEl.value = "";
+      history.replaceState(null, "", "#" + key);
+      render(true);
+    });
+    tabsEl.appendChild(b);
+  });
+
+  searchEl.addEventListener("input", () => render(false));
+  window.addEventListener("resize", moveLens);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(moveLens);
+
+  const fromHash = location.hash.replace("#", "");
+  if (DATA[fromHash]) current = fromHash;
+  render(true);
+</script>
+</body>
+</html>

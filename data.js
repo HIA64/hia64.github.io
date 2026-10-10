@@ -1,0 +1,71 @@
+const DATA = {
+  calamity: {
+    label: "Calamity Mod",
+    blurb: "Historical builds spanning the 1.0 to 2.x eras.",
+    authors: [{ name: "Ozzatron (previously Fabsol)", url: "https://github.com/CalamityTeam/CalamityModPublic" }],
+    items: [
+      { name: "v1.0.3",      url: "https://cdn.discordapp.com/attachments/1496447537761222848/1496447809845727334/Calamity_v1.0.3.tmod?ex=6acb5ba0&is=6aca0a20&hm=2dd69b8c39ef81a97cecaee5f17a6a8acacbc932960a6a826affeaf5ff850161&" },
+      { name: "v1.1.0",      url: "https://cdn.discordapp.com/attachments/1496447537761222848/1538174682346299492/Calamity_v1.1.0.tmod?ex=6acae38e&is=6ac9920e&hm=0c534f6c1df8f25de1fe5a106cabbfb0765e0c40be8ef837679a36b1a66ac708&" },
+      { name: "v1.1.4.44",   url: "https://cdn.discordapp.com/attachments/1496447537761222848/1543553475131215932/Calamity_v1.1.4.44.tmod?ex=6acb5732&is=6aca05b2&hm=8ed199b481d60ebe6de4cb6cb1021874e42afc0f68bbd198413269ba48b8d952&" },
+      { name: "v1.1.6.13",   url: "https://cdn.discordapp.com/attachments/1496447537761222848/1543595419739623424/Calamity_v1.1.6.13.tmod?ex=6acad582&is=6ac98402&hm=13c940d2a34fd9a1220ebe0d17f5e71bdeedb9c7a4d4a6c3240a2a9fcb5a3fc8&" },
+      { name: "v1.1.6.17",   url: "https://cdn.discordapp.com/attachments/1496447537761222848/1550775587889487893/Calamity_v1.1.6.17.tmod?ex=6acb3f50&is=6ac9edd0&hm=61d0c06008b851c93330677ab81c5e7b9cd0fbb2a579e2efa0fa2b7b244969f3&" },
+      { name: "v1.1.7",      url: "https://cdn.discordapp.com/attachments/1496447537761222848/1541733314451214386/Calamity_v1.1.7.tmod?ex=6acb4f8a&is=6ac9fe0a&hm=ad6a6fd2d76cfe9c4487b6bf833211edbfec87790e56273e307805554b74db46&" },
+      { name: "v1.1.7.2",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1541323868780765264/Calamity_v1.1.7.2.tmod?ex=6acb23b6&is=6ac9d236&hm=a6f69f5e5b5f279eadc4ad056a70b33c552756688e1105d92a1e438fd19cdcf3&" },
+      { name: "v1.1.7.55",   url: "https://cdn.discordapp.com/attachments/1496447537761222848/1550780421044965407/Calamity_v1.1.7.55.tmod?ex=6acb43d0&is=6ac9f250&hm=3ac4402659a690b540c229746360ecdad0f7f6d0db7f1f2e9b12fe7f5bac3357&" },
+      { name: "v1.1.7.58",   url: "https://cdn.discordapp.com/attachments/1496447537761222848/1550780624120455268/Calamity_v1.1.7.58.tmod?ex=6acb4400&is=6ac9f280&hm=5128ae82f8c3c1dcba602bfbc59ca7a4446204e483137811a80a8d1b3e406d92&" },
+      { name: "v1.1.7.801",  url: "https://cdn.discordapp.com/attachments/1496447537761222848/1550771956884701286/Calamity_v1.1.7.801.tmod?ex=6acb3bee&is=6ac9ea6e&hm=6b7c677bd9867155614331ed4fcebed3bb766a9efd831d200f20b47c3cad9da3&" },
+      { name: "v1.1.7.864",  url: "https://cdn.discordapp.com/attachments/1496447537761222848/1550767980139380796/Calamity_v1.1.7.864.tmod?ex=6acb383a&is=6ac9e6ba&hm=7e6c3f8cab52e14192cd6455cb224cbdb5bec171c6ecc2048f1f9d2354c31f88&" },
+      { name: "v1.1.7.946",  url: "https://cdn.discordapp.com/attachments/1496447537761222848/1550767041441697842/Calamity_v1.1.7.946.tmod?ex=6acb375a&is=6ac9e5da&hm=8002f41439476803e526a7cd0ce104330c3ee9f9cbe65dc44af1de8c972b7999&" },
+      { name: "v1.1.7.961",  url: "https://cdn.discordapp.com/attachments/1496447537761222848/1550766220385587312/Calamity_v1.1.7.961.tmod?ex=6acb3696&is=6ac9e516&hm=afaa5bdf81caee22e0bc98afadff4ab2dc5ab327dd5baeee5d25531eb6388f7d&" },
+      { name: "v1.1.7.971",  url: "https://cdn.discordapp.com/attachments/1496447537761222848/1541819948077158502/Calamity_v1.1.7.971.tmod?ex=6acaf779&is=6ac9a5f9&hm=41802bdcd25631f47f8902b3168068562976378ab8408e54d04706be3a5f5ac4&" },
+      { name: "v1.2.0.1",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1550802251751227442/Calamity_v1.2.0.1.tmod?ex=6acb5825&is=6aca06a5&hm=96b5902de11b5415f9eab3ea36c15ffd78fec162526193127f58c32ccf9108df&" },
+      { name: "v1.2.0.3",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1551194406189793350/Calamity_v1.2.0.3.tmod?ex=6acb73de&is=6aca225e&hm=5f0417ecc52717f0153a3fe00c338be204e21e105f6c413eb10250059db4a0d7&" },
+      { name: "v1.2.0.4",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1551196561994678302/Calamity_v1.2.0.4.tmod?ex=6acb75e0&is=6aca2460&hm=9509bbd53ca670dd13f3e05af4393ae4280b1d92597d4154f3a80dfe85587613&" },
+      { name: "v1.3.3.011",  url: "https://cdn.discordapp.com/attachments/1496447537761222848/1538937265286418596/Calamity_v1.3.3.011.tmod?ex=6acb06c4&is=6ac9b544&hm=3473fd2974ece2b2878d8bbfd5c5ffac07ed32a65da3e836f077efa0c77780ed&" },
+      { name: "v1.3.4.1",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1539992876606562525/Calamity_v1.3.4.1.tmod?ex=6acae961&is=6ac997e1&hm=5849ac469872c398a3a2e235b0b82c87a71928afef1c9a600e12fab6e09d6b6e&" },
+      { name: "v1.3.4.102",  url: "https://cdn.discordapp.com/attachments/1496447537761222848/1541721976509567036/Calamity_v1.3.4.102.tmod?ex=6acb44fb&is=6ac9f37b&hm=db249d0c835c7e5f97c3839260328141d3995e26e0bd19659f139754e4c53f7e&" },
+      { name: "v1.4.1.1",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1548311662941966346/Calamity_v1.4.1.001.tmod?ex=6acada5a&is=6ac988da&hm=63f7e3cb988dc9cc7aa514c1b3fccdaa0552d92b1bd2e7415d05c367628a0208&" },
+      { name: "v1.4.1.2",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1550865926793203782/Calamity_v1.4.1.002.tmod?ex=6acaeab2&is=6ac99932&hm=185a7a4ad8fb657e139ec3162f28365c13a5c3cafe8b1a620d1968d6553977e9&" },
+      { name: "v1.4.1.3",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1550865041413382286/Calamity_v1.4.1.003.tmod?ex=6acae9df&is=6ac9985f&hm=074b1a1a27732e84d835a943d753cbea926cee42928013fb4889c8979c40d153&" },
+      { name: "v1.4.1.4",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1550865084127907861/Calamity_v1.4.1.004.tmod?ex=6acae9e9&is=6ac99869&hm=535b281296b116d03d3484fea5c8b2159a3487ebd5dadf2d35086eeafba228b6&" },
+      { name: "v1.5.0.2",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1554929612755312661/Calamity_v1.5.0.2.tmod?backend=b2&ex=6acb32cc&is=6ac9e14c&hm=a4d4fc9a017b7e2e1402a73f7771cfa49b9525eb8ca44f61537f3391af37315e&" },
+      { name: "v1.5.0.3",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1555604159095640275/Calamity_v1.5.0.3.tmod?backend=b2&ex=6acb0405&is=6ac9b285&hm=a1ed7c38caa9c848d069d339b5b1c4ab1dbb349c6cdca28a0f799846088d8d88&" },
+      { name: "v1.5.1.2",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1554873483647778918/Calamity_v1.5.1.2.tmod?backend=b2&ex=6acafe86&is=6ac9ad06&hm=889af669b57f73b7fffa47765e7202046c67c44edcb5258c72d9b8755e114875&" },
+      { name: "v2.0.3.1",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1554552435354374154/Calamity_v2.0.3.1.tmod?backend=b2&ex=6acb2506&is=6ac9d386&hm=8498a1e9dee8a6fd6048049d40c2ddae89299d28cd0243d805d551dcb1882f23&" },
+      { name: "v2.0.3.6",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1553342166678372435/Calamity_v2.0.3.6.tmod?ex=6acb5b20&is=6aca09a0&hm=7236fdda6e0bcc37968dc9e8d94963c1ba0d1c54ecdde64b3cb2c75fc77bf9d5&" },
+      { name: "v2.0.4.6",    url: "https://cdn.discordapp.com/attachments/1496447537761222848/1551619889272197222/Calamity_v.2.0.4.6.tmod?ex=6acb05e1&is=6ac9b461&hm=b7a790884574de341106a38e0640018904b28374e44744acc32afa6b58fe1a24&" },
+      { name: "v2.1.2",      url: "https://cdn.discordapp.com/attachments/1496447537761222848/1551627589788115044/CalamityMod_v2.1.2.tmod?ex=6acb0d0d&is=6ac9bb8d&hm=d815b72bc2a075e80072b2ab4e0123fa417d4c9df6a9e245c83c63020162a17e&" }
+    ]
+  },
+  hero: {
+    label: "HERO's Mod",
+    blurb: "The classic in-game editing toolkit.",
+    authors: [{ name: "JavidPack", url: "https://github.com/JavidPack/HEROsMod" }],
+    items: [
+      { name: "v0.1.0.4",  url: "https://cdn.discordapp.com/attachments/1538064353125859358/1538065530643157022/HEROsMod_v0.1.0.4.tmod?ex=6acb26a6&is=6ac9d526&hm=b5fc987d5122e794a57fdc621473612770a6ec04af2c1702a7a51fca24a908c8&" },
+      { name: "v0.1.4.8",  url: "https://cdn.discordapp.com/attachments/1538064353125859358/1543981138723471380/HEROsMod_v0.1.4.8.tmod?ex=6acaeb3d&is=6ac999bd&hm=93dcd78beac3dd3d289edf5f048d0d681f614182fdd704a17e1dc7c774e99086&" },
+      { name: "v0.1.5.6",  url: "https://cdn.discordapp.com/attachments/1538064353125859358/1538203424141615134/HEROsMod_v0.1.5.6.tmod?ex=6acafe52&is=6ac9acd2&hm=349bd7a94507d2554e5a5dc972e436ebea8aefbb6138559311ad48bed33448f5&" },
+      { name: "v0.2.1",    url: "https://cdn.discordapp.com/attachments/1538064353125859358/1538940771393216636/HEROsMod_v0.2.1.tmod?ex=6acb0a08&is=6ac9b888&hm=4f1cd9b14874d8e7ba137b0db0606a4f849be245a0b43be4acb24f4f48df6fcb&" },
+      { name: "v0.2.6",    url: "https://cdn.discordapp.com/attachments/1538064353125859358/1539994295178633297/HEROsMod_v0.2.6.tmod?ex=6acaeab3&is=6ac99933&hm=26eb3aef1d0dd3838ea6a649dcb1df9df93a2ee3881d495dcbb9337e8688c473&" },
+      { name: "v0.3.5.1",  url: "https://cdn.discordapp.com/attachments/1538064353125859358/1548296081165520999/HEROsMod_v0.3.5.1.tmod?ex=6acacbd7&is=6ac97a57&hm=555f5b10c5493ef29d1aa390bd965e5f7833b95ffab5e0963d400b7cac8a58b6&" },
+      { name: "v0.3.6.1",  url: "https://cdn.discordapp.com/attachments/1538064353125859358/1554904390421184572/HEROsMod_v0.3.6.1.tmod?backend=b2&ex=6acb1b4f&is=6ac9c9cf&hm=5aacdb70c733b1f5782a34cbbfa172808e906805b1dd8d649378728bdb17e7c0&" },
+      { name: "v0.4.12.6", url: "https://cdn.discordapp.com/attachments/1538064353125859358/1554531624450789376/HEROsMod_v0.4.12.6.tmod?backend=b2&ex=6acb11a5&is=6ac9c025&hm=f014b705f2c4a69e12e1bf7141065cb3a0355551cd47101da66afaebc08e7250&" },
+      { name: "v0.4.14.1", url: "https://cdn.discordapp.com/attachments/1538064353125859358/1553344891491188856/HEROsMod_v0.4.14.1.tmod?ex=6acb5da9&is=6aca0c29&hm=b17658c5c2c6e4c9ca2987a624b3511029f395385db321d556a7ae0ce06821a8&" },
+      { name: "v0.4.18",   url: "https://cdn.discordapp.com/attachments/1538064353125859358/1551629584372465805/HEROsMod_v0.4.18.tmod?ex=6acb0ee8&is=6ac9bd68&hm=d1b088fbc785761a0e994e735b8f6aa384c243a46619c7e6c881c7f0163de361&" },
+    ]
+  },
+  music: {
+    label: "Calamity Mod Music",
+    blurb: "Soundtrack and music packs for Calamity Mod.",
+    authors: [{ name: "Ozzatron (previously Fabsol)", url: "https://github.com/CalamityTeam/CalamityModMusicPublic" }],
+    items: [
+      { name: "v1.4.1.3", url: "https://cdn.discordapp.com/attachments/1555956652740714516/1555956809439645878/CalamityMusic_v1.4.1.3.tmod?backend=b2&ex=6acafaf3&is=6ac9a973&hm=a0443b97ac3a3e0edf73b7b04427afcd01a1869f2e62425252dc30d0fa12cca3&" },
+      { name: "v1.5.0.3", url: "https://cdn.discordapp.com/attachments/1555956652740714516/1555956876712218674/CalamityMusic_v1.5.0.3.tmod?backend=b2&ex=6acafb03&is=6ac9a983&hm=7a185e5479bb267bafa7ef8a25666916be85a753949958a3f3e189426d125d74&" },
+      { name: "v1.5.1.1", url: "https://cdn.discordapp.com/attachments/1555956652740714516/1555956968185794570/CalamityMusic_v1.5.1.1.tmod?backend=b2&ex=6acafb19&is=6ac9a999&hm=386e1da1cf750f55b29c42b0a4ac028350adca5ceeb86f0ba1c56d6fc9b5846b&" },
+      { name: "v2.0.3.1", url: "https://cdn.discordapp.com/attachments/1555956652740714516/1555957119092658318/CalamityMusic_v2.0.3.1.tmod?backend=b2&ex=6acafb3d&is=6ac9a9bd&hm=1e0a57b433f31314739d6ab9b46e12ee9713997046ae7d8115358898b53496b7&" },
+      { name: "v2.0.3.5", url: "https://cdn.discordapp.com/attachments/1555956652740714516/1555957245051797574/CalamityMusic_v2.0.3.5.tmod?backend=b2&ex=6acafb5b&is=6ac9a9db&hm=7a949956264004705a5efd671df1fc1f9ff4cfee87bcc5b52237c4b56c3cc7bd&" },
+      { name: "v2.0.4.3", url: "https://cdn.discordapp.com/attachments/1555956652740714516/1555957358562119821/CalamityMusic_v2.0.4.3.tmod?backend=b2&ex=6acafb76&is=6ac9a9f6&hm=4a0167e2687642486b07149979b50cc24e48163df5b6faade657861294e2b0e2&" },
+      { name: "v2.1.0",   url: "https://cdn.discordapp.com/attachments/1555956652740714516/1555957541010149467/CalamityMusic_v2.1.0.tmod?backend=b2&ex=6acafba2&is=6ac9aa22&hm=865acf6eb86ea185d640dec6fbedd25d113c4659204347937a85b0bca50e0496&" },
+    ]
+  }
+};
