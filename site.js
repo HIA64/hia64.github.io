@@ -74,7 +74,7 @@
       idx = (idx + 1) % phrases.length;
       if (reduce) { text.textContent = phrases[idx]; fit(); return; }
       const out = text.animate(
-        [{ opacity: 1, filter: 'blur(0)', transform: 'none' }, { opacity: 0, filter: 'blur(6px)', transform: 'translateY(-6px)' }],
+        [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-6px)' }],
         { duration: 280, easing: 'ease-in', fill: 'forwards' }
       );
       out.onfinish = () => {
@@ -82,7 +82,7 @@
         fit();                      
         out.cancel();
         text.animate(
-          [{ opacity: 0, filter: 'blur(6px)', transform: 'translateY(6px)' }, { opacity: 1, filter: 'blur(0)', transform: 'none' }],
+          [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }],
           { duration: 500, delay: 180, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }
         );
       };

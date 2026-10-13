@@ -632,3 +632,105 @@ footer { margin-top: 76px; padding: 0 0 30px; }
   .panel.doc { padding: 6px 22px; }
   .doc li { padding-left: 46px; }
 }
+
+
+/* ===== MOBILE FIXES & PERFORMANCE LAYER (last on purpose) ===== */
+html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
+body { overflow-x: clip; -webkit-tap-highlight-color: transparent; }
+@supports (min-height: 100dvh) { body { min-height: 100dvh; } .page { min-height: calc(100dvh - 92px); } }
+
+/* logo is a plain label now, not a link */
+.logo { cursor: default; user-select: none; -webkit-user-select: none; }
+.nav-pill { max-width: 100%; }
+
+/* cards never force the grid wider than the screen */
+.cards { grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); }
+.segmented { overscroll-behavior-x: contain; }
+.seg-lens { will-change: transform; }
+
+/* touch screens: no sticky :hover (it scaled/shifted blocks past the screen edge) */
+@media (hover: none) {
+  .widget:hover, .card:hover, .btn:hover, .btn.prime:hover, .ver:hover, .ver:not(.off):hover,
+  .dock a:hover, .search-wrap:focus-within, .nav-pill nav a:hover { transform: none !important; }
+  .card:hover .icon-sq { transform: none; }
+  .ver:not(.off):hover > span:first-child { transform: none; }
+  .ver:not(.off):hover .go { animation: none; }
+  .glass, .lite { --reach: 0px; }
+}
+
+@media (max-width: 760px) {
+  .wrap { padding: 0 16px; }
+  .hero { padding-top: 24px; }
+  .hero p.sub { font-size: 17px; margin-bottom: 28px; }
+  .buttons { gap: 12px; }
+  .btn { font-size: 17px; padding: 14px 22px; }
+  .widgets { grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 36px; }
+  .widget { min-height: 128px; padding: 18px 20px; border-radius: 30px; min-width: 0; }
+  .widget .w-num { font-size: 56px; white-space: nowrap; }
+  .widget.wide .w-num { font-size: clamp(44px, 14vw, 68px); }
+  section { padding-top: 44px; }
+  section h2 { font-size: 26px; }
+  .card { padding: 20px; border-radius: 28px; }
+  .page-head h1 { font-size: clamp(30px, 9vw, 44px); overflow-wrap: anywhere; }
+  .panel-head h2 { font-size: 26px; }
+  .search-wrap { max-width: 100%; margin-bottom: 22px; }
+  .versions { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; }
+  .ver { padding: 12px 10px 12px 14px; font-size: 15px; border-radius: 20px; min-width: 0; }
+  .ver > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .btn.author { max-width: 100%; }
+  .authors { margin-top: 26px; }
+  footer { margin-top: 48px; }
+  .foot .note { font-size: 14px; }
+  .doc a, .creator a { overflow-wrap: anywhere; }
+  .panel.doc { margin-top: 22px; }
+  .doc h3 { font-size: 18px; }
+  .doc p { font-size: 15px; }
+
+  /* mod picker: three equal columns that fit the screen, so the lens never scrolls away */
+  .tabs { margin: 22px 0 18px; }
+  .segmented { display: flex; width: 100%; overflow: hidden; }
+  .tab { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center;
+         white-space: normal; text-align: center; line-height: 1.15; font-size: 13.5px; padding: 9px 6px; }
+}
+
+@media (max-width: 480px) {
+  .topnav { top: 10px; padding: 0 8px; }
+  .nav-pill { padding: 5px; }
+  .logo { display: none; }
+  .nav-pill nav { width: 100%; justify-content: space-between; }
+  .nav-pill nav a { padding: 8px 12px; font-size: 14px; }
+  body { padding-top: 76px; }
+  .hero h1 { font-size: clamp(34px, 11vw, 48px); }
+  .dock { gap: 8px; padding: 7px; border-radius: 28px; }
+  .dock a { width: 44px; height: 44px; }
+}
+
+/* ===== performance: phones & any touch device ===== */
+@media (max-width: 760px), (pointer: coarse) {
+  :root {
+    --noise: linear-gradient(transparent, transparent);
+    --noise-soft: linear-gradient(transparent, transparent);
+    --inner: inset 0 1px 0 rgba(255,255,255,.42), inset 0 0 18px rgba(255,255,255,.07);
+    --inner-s: inset 0 1px 0 rgba(255,255,255,.5);
+    --elev-1: 0 6px 16px rgba(6,24,54,.22);
+    --elev-2: 0 8px 20px rgba(6,24,54,.26);
+    --elev-s: 0 2px 8px rgba(6,24,54,.18);
+  }
+  /* the wallpaper is a static smooth gradient: blur on top of it changes nothing visually,
+     so only the nav (content scrolls under it) keeps a backdrop filter */
+  .glass, .btn.prime { -webkit-backdrop-filter: none; backdrop-filter: none; background-color: rgba(38, 70, 102, .30); }
+  .nav-pill.glass { -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%); background-color: rgba(38, 70, 102, .26); }
+  .glass::before, .lite::before, .glass::after, .lite::after { display: none; }
+  .wall::after { display: none; }
+  body { text-shadow: none; }
+  .hero h1, .page-head h1 { text-shadow: 0 1px 10px rgba(8, 40, 80, .3); }
+  .widget, .card, .btn, .ver, .dock a { will-change: auto; backface-visibility: visible; }
+
+  /* entrance animations: only opacity + transform (no blur filter), shorter stagger */
+  @keyframes blurIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes riseIn { from { opacity: 0; transform: translateY(16px); } to { opacity: var(--o, 1); transform: none; } }
+  @keyframes dropIn { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: none; } }
+  @keyframes pop    { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .ver { animation-delay: calc(min(var(--i, 0), 10) * 20ms); animation-duration: .35s; }
+  .seg-lens { transition-duration: .4s; }
+}
