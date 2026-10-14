@@ -38,16 +38,33 @@
     el.style.setProperty('--my', (e.clientY - r.top) + 'px');
   }, { passive: true });
 
-  /*weak-device probe: if the first ~700ms of frames are slow on a touch screen, switch to the lighter tier*/
-  if (!reduce && window.matchMedia('(pointer: coarse)').matches) {
-    let last = 0, n = 0, slow = 0;
-    (function probe(t) {
-      if (last && n++ > 2) { if (t - last > 34) slow++; }
+  /*low-end tier: never for capable phones. Only when the hardware hints say "weak" (<=4 cores or <=3 GB)
+    AND frames are measurably slow while the user actually scrolls. Manual override: ?fx=low / ?fx=high*/
+  (function () {
+    const coarse = window.matchMedia('(pointer: coarse)').matches;
+    let fx = '';
+    try { fx = new URLSearchParams(location.search).get('fx') || ''; } catch (e) {}
+    const root = document.documentElement;
+    if (fx === 'low') { root.classList.add('lowfx'); return; }
+    if (fx === 'high' || !coarse || reduce) return;
+    const weak = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 3;
+    if (!weak) return;
+    let lastScroll = 0, last = 0, n = 0, bad = 0, running = false;
+    function frame(t) {
+      if (t - lastScroll < 120) {
+        const dt = t - last;
+        if (last && dt < 250) { n++; if (dt > 40) bad++; }
+        if (n >= 60) { if (bad / n > 0.4) root.classList.add('lowfx'); window.removeEventListener('scroll', onScroll); return; }
+      }
       last = t;
-      if (n < 40) requestAnimationFrame(probe);
-      else if (slow > 14) document.documentElement.classList.add('lowfx');
-    })(performance.now());
-  }
+      requestAnimationFrame(frame);
+    }
+    function onScroll() {
+      lastScroll = performance.now();
+      if (!running) { running = true; requestAnimationFrame(frame); }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+  })();
 
   /*tab puck: liquid stretch while it slides*/
   const lens = document.getElementById('lens');
