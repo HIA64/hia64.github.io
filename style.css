@@ -705,32 +705,70 @@ body { overflow-x: clip; -webkit-tap-highlight-color: transparent; }
   .dock a { width: 44px; height: 44px; }
 }
 
-/* ===== performance: phones & any touch device ===== */
-@media (max-width: 760px), (pointer: coarse) {
+/* ===== phones & touch: Liquid Glass without live blur =====
+   The wallpaper is static, so the expensive part (backdrop-filter on ~20 layers) is replaced by
+   painting the same glass once: lit rim, edge dispersion, inner thickness, sheen. Static paint is
+   rasterised once; only opacity/transform ever animate, so scrolling and entrances stay on the GPU. */
+@media (max-width: 760px), (hover: none) and (pointer: coarse) {
   :root {
     --noise: linear-gradient(transparent, transparent);
     --noise-soft: linear-gradient(transparent, transparent);
-    --inner: inset 0 1px 0 rgba(255,255,255,.42), inset 0 0 18px rgba(255,255,255,.07);
-    --inner-s: inset 0 1px 0 rgba(255,255,255,.5);
-    --elev-1: 0 6px 16px rgba(6,24,54,.22);
-    --elev-2: 0 8px 20px rgba(6,24,54,.26);
-    --elev-s: 0 2px 8px rgba(6,24,54,.18);
+    --inner:
+      inset 0 1px 0 rgba(255, 255, 255, .42),
+      inset 3px 3px 8px -4px rgba(170, 236, 255, .55),
+      inset -3px -3px 8px -4px rgba(255, 186, 232, .42),
+      inset 0 -12px 18px -10px rgba(255, 255, 255, .20);
+    --inner-s:
+      inset 0 1px 0 rgba(255, 255, 255, .55),
+      inset 2px 2px 4px -3px rgba(170, 236, 255, .55),
+      inset -2px -2px 4px -3px rgba(255, 186, 232, .42);
+    --elev-1: 0 8px 22px rgba(6, 24, 54, .24), 0 1px 4px rgba(6, 24, 54, .12);
+    --elev-2: 0 10px 26px rgba(6, 24, 54, .28);
+    --elev-s: 0 3px 10px rgba(6, 24, 54, .18);
   }
-  /* the wallpaper is a static smooth gradient: blur on top of it changes nothing visually,
-     so only the nav (content scrolls under it) keeps a backdrop filter */
-  .glass, .btn.prime { -webkit-backdrop-filter: none; backdrop-filter: none; background-color: rgba(38, 70, 102, .30); }
-  .nav-pill.glass { -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%); background-color: rgba(38, 70, 102, .26); }
-  .glass::before, .lite::before, .glass::after, .lite::after { display: none; }
-  .wall::after { display: none; }
-  body { text-shadow: none; }
-  .hero h1, .page-head h1 { text-shadow: 0 1px 10px rgba(8, 40, 80, .3); }
-  .widget, .card, .btn, .ver, .dock a { will-change: auto; backface-visibility: visible; }
+  /* no live backdrop blur (the single biggest cost on budget GPUs); the nav keeps a light one
+     because page content scrolls underneath it */
+  .glass, .btn.prime { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .nav-pill.glass { -webkit-backdrop-filter: blur(12px) saturate(170%); backdrop-filter: blur(12px) saturate(170%); }
 
-  /* entrance animations: only opacity + transform (no blur filter), shorter stagger */
-  @keyframes blurIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-  @keyframes riseIn { from { opacity: 0; transform: translateY(16px); } to { opacity: var(--o, 1); transform: none; } }
-  @keyframes dropIn { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: none; } }
-  @keyframes pop    { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-  .ver { animation-delay: calc(min(var(--i, 0), 10) * 20ms); animation-duration: .35s; }
-  .seg-lens { transition-duration: .4s; }
+  /* the blur used to lift and saturate what sits behind the glass; do it with a light cool tint instead */
+  .glass, .btn.prime {
+    background:
+      radial-gradient(260px circle at var(--mx, 50%) var(--my, -30%), rgba(255, 255, 255, .30), transparent 62%),
+      linear-gradient(180deg, rgba(255, 255, 255, .24) 0%, rgba(255, 255, 255, .05) 40%, transparent 62%),
+      linear-gradient(130deg, rgba(255, 255, 255, .26) 0%, rgba(255, 255, 255, .06) 38%, rgba(255, 255, 255, .13) 70%, rgba(255, 255, 255, .06) 100%),
+      rgba(70, 125, 190, .16);
+  }
+  .lite {
+    background:
+      radial-gradient(200px circle at var(--mx, 50%) var(--my, -30%), rgba(255, 255, 255, .28), transparent 65%),
+      linear-gradient(180deg, rgba(255, 255, 255, .26) 0%, rgba(255, 255, 255, .06) 45%, rgba(255, 255, 255, .12) 100%),
+      rgba(70, 125, 190, .18);
+  }
+  .glass::after, .lite::after { display: none; }       /* hover hit-area helper, useless on touch */
+  .wall::after { display: none; }
+  body { text-shadow: 0 1px 6px rgba(8, 36, 70, .22); }
+  .widget, .card, .btn, .ver, .dock a { will-change: auto; backface-visibility: visible; }
+  .glass, .lite { --reach: 0px; }
+
+  /* entrances: opacity + transform only (no filter: blur), so they run on the compositor */
+  @keyframes blurIn { from { opacity: 0; transform: translateY(16px) scale(.985); } to { opacity: 1; transform: none; } }
+  @keyframes riseIn { from { opacity: 0; transform: translateY(20px) scale(.97); } to { opacity: var(--o, 1); transform: none; } }
+  @keyframes dropIn { from { opacity: 0; transform: translateY(-18px) scale(.94); } to { opacity: 1; transform: none; } }
+  @keyframes pop    { from { opacity: 0; transform: translateY(10px) scale(.92); } to { opacity: 1; transform: none; } }
+  .ver { animation-duration: .4s; animation-delay: calc(min(var(--i, 0), 12) * 22ms); }
+  .reveal.in { animation-duration: .65s; }
+  .seg-lens { transition-duration: .45s; }
+
+  /* press feedback replaces hover on touch: quick springy squash + light-up */
+  .btn, .widget, .card, .ver, .dock a, .tab { transition: transform .35s var(--spring), background-color .25s; }
+  .btn:active, .widget:active, .card:active { transform: scale(.975); transition-duration: .12s; }
+  .ver:not(.off):active { transform: scale(.95); transition-duration: .12s; }
+  .tab:active { transform: scale(.94); }
 }
+
+/* very weak devices (detected by a frame-time probe in site.js): drop the per-element rim and stagger */
+.lowfx .glass::before, .lowfx .lite::before { display: none; }
+.lowfx .reveal.in, .lowfx .ver, .lowfx .hero .btn, .lowfx .hero h1, .lowfx .hero p.sub,
+.lowfx .page-head h1, .lowfx .page-head p, .lowfx .segmented { animation-delay: 0s !important; animation-duration: .3s !important; }
+.lowfx .glass, .lowfx .lite, .lowfx .btn.prime { box-shadow: var(--inner-s), var(--elev-s); }

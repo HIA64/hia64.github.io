@@ -18,6 +18,37 @@
     });
   }, { passive: true });
 
+  /*touch: the specular highlight jumps to the finger on tap (one element, cheap)*/
+  document.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    const el = e.target.closest && e.target.closest('.glass, .lite');
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }, { passive: true });
+
+  /*touch: light the glass where the finger lands (one custom-property write, no per-frame work)*/
+  document.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    const el = e.target.closest && e.target.closest('.glass, .lite');
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }, { passive: true });
+
+  /*weak-device probe: if the first ~700ms of frames are slow on a touch screen, switch to the lighter tier*/
+  if (!reduce && window.matchMedia('(pointer: coarse)').matches) {
+    let last = 0, n = 0, slow = 0;
+    (function probe(t) {
+      if (last && n++ > 2) { if (t - last > 34) slow++; }
+      last = t;
+      if (n < 40) requestAnimationFrame(probe);
+      else if (slow > 14) document.documentElement.classList.add('lowfx');
+    })(performance.now());
+  }
+
   /*tab puck: liquid stretch while it slides*/
   const lens = document.getElementById('lens');
   if (lens && !reduce) {
