@@ -752,3 +752,89 @@ body { overflow-x: clip; -webkit-tap-highlight-color: transparent; }
 }
 .lowfx .reveal.in, .lowfx .ver, .lowfx .hero .btn, .lowfx .hero h1, .lowfx .hero p.sub,
 .lowfx .page-head h1, .lowfx .page-head p, .lowfx .segmented { animation-delay: 0s !important; animation-duration: .3s !important; }
+
+
+/* === LIQUID GLASS v2: layered material ===
+   base tint / refraction / specular / edge / depth, all cool-toned.
+   site.js sets --la (angle toward the lamp), --sx/--sy (highlight spot)
+   per element, and adds html.refract in Chromium for the real lens.*/
+@property --la { syntax: '<angle>'; inherits: false; initial-value: 315deg; }
+
+:root {
+  /* EDGE + thickness: bright top lip, darker bottom lip, side reflections,
+     a second faint inner edge (the bezel), cold light inside the bevel */
+  --inner:
+    inset 0 1px 0 rgba(232, 252, 255, .55),
+    inset 0 -1px 0 rgba(8, 40, 110, .22),
+    inset 1px 0 0 rgba(180, 235, 255, .16),
+    inset -1px 0 0 rgba(180, 235, 255, .10),
+    inset 0 0 0 5px rgba(255, 255, 255, .035),
+    inset 3px 4px 10px -4px rgba(150, 230, 255, .55),
+    inset -3px -4px 10px -4px rgba(120, 150, 255, .40),
+    inset 0 -18px 26px -14px rgba(160, 225, 255, .22),
+    inset 0 0 34px rgba(190, 235, 255, .08);
+  --inner-s:
+    inset 0 1px 0 rgba(232, 252, 255, .60),
+    inset 0 -1px 0 rgba(8, 40, 110, .18),
+    inset 2px 2px 5px -3px rgba(150, 230, 255, .55),
+    inset -2px -2px 5px -3px rgba(120, 150, 255, .40),
+    inset 0 -7px 10px -5px rgba(190, 240, 255, .18);
+  /* buttons are more convex: pillowy top, glowing underside */
+  --inner-btn:
+    var(--inner),
+    inset 0 9px 14px -7px rgba(240, 253, 255, .32),
+    inset 0 -11px 16px -7px rgba(150, 225, 255, .30);
+  /* DEPTH: blue-tinted contact shadow + a faint caustic of light under the glass */
+  --elev-1: 0 12px 30px rgba(4, 26, 78, .30), 0 2px 8px rgba(4, 26, 78, .16), 0 18px 22px -16px rgba(130, 225, 255, .20);
+  --elev-2: 0 26px 56px rgba(4, 26, 78, .38), 0 6px 18px rgba(4, 26, 78, .22), 0 24px 28px -16px rgba(130, 225, 255, .26);
+  --elev-s: 0 4px 14px rgba(4, 26, 78, .22), 0 1px 4px rgba(4, 26, 78, .10);
+}
+
+/* BASE + SPECULAR layers (top to bottom):
+   cursor hot spot / main highlight / secondary glint (breaks symmetry) /
+   cool bounce light on the far side / vertical cyan wash / grain / tint */
+.glass { --tint: rgba(34, 78, 122, .16); }
+.lite  { --tint: rgba(48, 90, 130, .24); }
+.glass, .lite, .btn.prime, .btn.prime:hover {
+  background:
+    radial-gradient(340px circle at var(--mx, 50%) var(--my, -30%), rgba(235, 252, 255, .24), transparent 62%),
+    radial-gradient(78% 54% at var(--sx, 28%) var(--sy, 6%), rgba(236, 252, 255, .30), rgba(236, 252, 255, .06) 55%, transparent 74%),
+    radial-gradient(34% 22% at calc(var(--sx, 28%) + 22%) calc(var(--sy, 6%) + 10%), rgba(255, 255, 255, .22), transparent 100%),
+    radial-gradient(120% 70% at calc(100% - var(--sx, 28%)) calc(100% - var(--sy, 6%)), rgba(120, 215, 255, .20), transparent 70%),
+    linear-gradient(180deg, rgba(190, 235, 255, .16), rgba(190, 235, 255, .02) 40%, rgba(30, 90, 170, .10)),
+    var(--noise-soft),
+    var(--tint, rgba(34, 78, 122, .16));
+}
+.btn.prime:active { background-color: rgba(255, 255, 255, .20); }
+
+/* EDGE layer: a conic rim that is brightest toward the lamp (--la), has a cooler
+   bounce on the opposite side, a darker lower edge, and still ignites under the cursor */
+.glass::before, .lite::before {
+  padding: 1.5px;
+  background:
+    radial-gradient(150px circle at var(--mx, 50%) var(--my, -40%), rgba(240, 253, 255, .95), transparent 70%),
+    conic-gradient(from var(--la, 315deg) at 50% 50%,
+      rgba(240, 253, 255, .95) 0deg, rgba(190, 240, 255, .38) 38deg, rgba(255, 255, 255, .03) 92deg,
+      rgba(255, 255, 255, .03) 150deg, rgba(150, 225, 255, .50) 180deg, rgba(255, 255, 255, .03) 214deg,
+      rgba(255, 255, 255, .03) 268deg, rgba(190, 240, 255, .38) 322deg, rgba(240, 253, 255, .95) 360deg),
+    linear-gradient(0deg, rgba(6, 38, 110, .34), transparent 46%);
+}
+
+/* convex buttons */
+.btn.glass, .btn.glass.prime { box-shadow: var(--inner-btn), var(--elev-1); }
+.btn.glass:hover, .btn.glass.prime:hover { box-shadow: var(--inner-btn), var(--elev-2); }
+
+/* REFRACTION layer (Chromium, set up by site.js): less blur so the background stays
+   readable, and the edge bends it like a lens. --refract is a per-element SVG filter. */
+.refract .nav-pill.glass, .refract .btn.glass, .refract .dock.glass, .refract .search-wrap.glass,
+.refract .segmented.glass, .refract .widget.glass, .refract .card.glass, .refract .creator.glass, .refract .note.glass {
+  backdrop-filter: blur(7px) var(--refract, ) saturate(200%) brightness(1.07);
+}
+
+/* keep the accessibility / no-backdrop fallbacks working over the new background */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass, .btn.prime, .btn.prime:hover { background: rgba(46, 80, 116, .88); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .lite, .btn.prime, .btn.prime:hover { background: rgba(46, 80, 116, .94); }
+}
