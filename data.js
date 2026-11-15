@@ -33,7 +33,7 @@ const DATA = {
       { name: "v1.5.1.2",    url: "https://archive.org/download/terraria-internet-archive/CalamityMod/Calamity%20%28v1.5.1.2%29.tmod" },
       { name: "v2.0.3.1",    url: "https://archive.org/download/terraria-internet-archive/CalamityMod/Calamity%20%28v2.0.3.1%29.tmod" },
       { name: "v2.0.3.6",    url: "https://archive.org/download/terraria-internet-archive/CalamityMod/Calamity%20%28v2.0.3.6%29.tmod" },
-      { name: "v2.0.4.6",    url: "https://archive.org/download/terraria-internet-archive/CalamityMod/Calamity%20%28v2.0.4.6%29.tmod" },
+      { name: "v2.0.4.6",    url: "https://archive.org/download/terraria-internet-archive/CalamityMod/Calamity%20%28v.2.0.4.6%29.tmod" },
       { name: "v2.1.2",      url: "https://archive.org/download/terraria-internet-archive/CalamityMod/CalamityMod%20%28v2.1.2%29.tmod" }
     ]
   },
