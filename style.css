@@ -1,12 +1,12 @@
-/*Liquid Glass — iOS 26 / Apple Liquid Glass (performance-tuned)
+/*Liquid Glass — iOS 26 / Apple Liquid Glass
    Key principles:
-   - NO visible hard borders. Glass edges are defined only by
-     refraction, specular edge glow and shadow, exactly like iOS 26.
-   - Specular highlight: a radial-gradient "sheen" that shifts with
-     the mouse via --mx / --my (set in site.js).
-   - Depth: soft outer drop-shadow (not a border) beneath every surface.
-   - Active tab / selected state: a brighter inner surface, not a border.
-   - font: SF Pro on Apple devices, Inter elsewhere*/
+   -NO visible hard borders. Glass edges are defined only by
+    refraction, specular edge glow and shadow, exactly like iOS 26.
+   -Specular highlight: a radial-gradient "sheen" that shifts with
+    the mouse via --mx / --my (set in site.js).
+   -Depth: soft outer drop-shadow (not a border) beneath every surface.
+   -Active tab / selected state: a brighter inner surface, not a border.
+   -font: SF Pro on Apple devices, Inter elsewhere*/
 
 :root {
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
@@ -58,11 +58,7 @@ a { color: inherit; }
 .wrap { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 22px; }
 main { flex: 1; }
 
-/*THE GLASS MATERIAL — iOS 26 Liquid Glass recipe
-   No hard border. Edge definition comes from:
-     1. Specular edge glow  →  inset box-shadow with large blur
-     2. Surface sheen       →  radial-gradient chasing the mouse
-     3. Outer shadow        →  elevation / depth*/
+/*THE GLASS MATERIAL — iOS 26 Liquid Glass recipe*/
 .glass {
   position: relative;
   /* Surface: frosted, slightly warm tint + mouse-tracking specular */
@@ -85,11 +81,7 @@ main { flex: 1; }
   -webkit-backdrop-filter: blur(20px) saturate(190%) brightness(1.06);
   backdrop-filter: blur(20px) saturate(190%) brightness(1.06);
 
-  /* Shadows:
-       - specular top-left edge glow (replaces border)
-       - soft inner ambient (gives thickness)
-       - soft outer drop shadow (elevation)
-       - subtle bottom-edge darkening (ground shadow, like iOS dock)*/
+  /* Shadows:*/
   box-shadow:
     /* top-left specular edge — the "glass rim" */
     inset 0.5px 0.5px 0 rgba(255, 255, 255, .85),
@@ -143,9 +135,7 @@ main { flex: 1; }
 }
 .icon-sq svg { width: 30px; height: 30px; fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
-/* FLOATING NAV CAPSULE
-   iOS 26: nav bar is a free-floating pill, no border, pure glass.
-   The "active" link gets a brighter inset surface, not an outline.*/
+/* FLOATING NAV CAPSULE*/
 .topnav { position: fixed; top: 14px; left: 0; right: 0; z-index: 50; display: flex; justify-content: center; pointer-events: none; padding: 0 12px; }
 .nav-pill {
   pointer-events: auto; display: flex; align-items: center; gap: 4px;
@@ -447,11 +437,6 @@ footer { margin-top: 76px; padding: 0 0 30px; }
 }
 .dock a:active { transform: scale(.92); }
 .dock img { width: 22px; height: 22px; display: block; }
-@media (max-width: 480px) {
-  .dock { gap: 6px; padding: 7px; max-width: 100%; }
-  .dock a { width: 38px; height: 38px; border-radius: 12px; }
-  .dock img { width: 19px; height: 19px; }
-}
 
 /*ANIMATIONS*/
 @keyframes riseIn { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: var(--o, 1); transform: none; } }
@@ -639,7 +624,7 @@ footer { margin-top: 76px; padding: 0 0 30px; }
 }
 
 
-/* ===== MOBILE FIXES & PERFORMANCE LAYER (last on purpose) ===== */
+/* MOBILE FIXES & PERFORMANCE LAYER*/
 html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
 body { overflow-x: clip; -webkit-tap-highlight-color: transparent; }
 @supports (min-height: 100dvh) { body { min-height: 100dvh; } .page { min-height: calc(100dvh - 92px); } }
@@ -706,14 +691,11 @@ body { overflow-x: clip; -webkit-tap-highlight-color: transparent; }
   .nav-pill nav a { padding: 8px 12px; font-size: 14px; }
   body { padding-top: 76px; }
   .hero h1 { font-size: clamp(34px, 11vw, 48px); }
-  .dock { gap: 8px; padding: 7px; border-radius: 28px; }
+  .dock { gap: 8px; padding: 7px; border-radius: 28px; flex-wrap: wrap; justify-content: center; max-width: 100%; }
   .dock a { width: 44px; height: 44px; }
 }
 
-/* ===== phones & touch: the SAME Liquid Glass as desktop, tuned to stay smooth =====
-   Real backdrop blur + saturation stays (that is what makes it liquid glass). What is trimmed is
-   only what costs a lot and is invisible: smaller blur radius, no grain texture, no hover-only
-   helpers, no blur() in animations (animations are opacity/transform only). */
+/*phones & touch: the SAME Liquid Glass as desktop, tuned to stay smooth*/
 @media (max-width: 760px), (hover: none) and (pointer: coarse) {
   :root {
     --noise: linear-gradient(transparent, transparent);
@@ -744,8 +726,6 @@ body { overflow-x: clip; -webkit-tap-highlight-color: transparent; }
   .tab:active { transform: scale(.94); }
 }
 
-/* LOW-END TIER: only switched on for genuinely weak hardware that is measurably janky while
-   scrolling (see site.js), or manually with ?fx=low. Glass is painted instead of blurred. */
 .lowfx .glass, .lowfx .lite, .lowfx .btn.prime { -webkit-backdrop-filter: none; backdrop-filter: none; }
 .lowfx .nav-pill.glass { -webkit-backdrop-filter: blur(10px) saturate(170%); backdrop-filter: blur(10px) saturate(170%); }
 .lowfx .glass, .lowfx .btn.prime {
@@ -757,3 +737,171 @@ body { overflow-x: clip; -webkit-tap-highlight-color: transparent; }
 }
 .lowfx .reveal.in, .lowfx .ver, .lowfx .hero .btn, .lowfx .hero h1, .lowfx .hero p.sub,
 .lowfx .page-head h1, .lowfx .page-head p, .lowfx .segmented { animation-delay: 0s !important; animation-duration: .3s !important; }
+
+
+/* LIQUID GLASS v2: layered material
+   base tint / refraction / specular / edge / depth, all cool-toned.
+   site.js sets --la (angle toward the lamp), --sx/--sy (highlight spot)
+   per element, and adds html.refract in Chromium for the real lens. */
+@property --la { syntax: '<angle>'; inherits: false; initial-value: 315deg; }
+
+:root {
+  /* EDGE + thickness: bright top lip, darker bottom lip, side reflections,
+     a second faint inner edge (the bezel), cold light inside the bevel */
+  --inner:
+    inset 0 1px 0 rgba(232, 252, 255, .55),
+    inset 0 -1px 0 rgba(8, 40, 110, .22),
+    inset 1px 0 0 rgba(180, 235, 255, .16),
+    inset -1px 0 0 rgba(180, 235, 255, .10),
+    inset 0 0 0 5px rgba(255, 255, 255, .035),
+    inset 3px 4px 10px -4px rgba(150, 230, 255, .55),
+    inset -3px -4px 10px -4px rgba(120, 150, 255, .40),
+    inset 0 -18px 26px -14px rgba(160, 225, 255, .22),
+    inset 0 0 34px rgba(190, 235, 255, .08);
+  --inner-s:
+    inset 0 1px 0 rgba(232, 252, 255, .60),
+    inset 0 -1px 0 rgba(8, 40, 110, .18),
+    inset 2px 2px 5px -3px rgba(150, 230, 255, .55),
+    inset -2px -2px 5px -3px rgba(120, 150, 255, .40),
+    inset 0 -7px 10px -5px rgba(190, 240, 255, .18);
+  /* buttons are more convex: pillowy top, glowing underside */
+  --inner-btn:
+    var(--inner),
+    inset 0 9px 14px -7px rgba(240, 253, 255, .32),
+    inset 0 -11px 16px -7px rgba(150, 225, 255, .30);
+  /* DEPTH: blue-tinted contact shadow + a faint caustic of light under the glass */
+  --elev-1: 0 12px 30px rgba(4, 26, 78, .30), 0 2px 8px rgba(4, 26, 78, .16), 0 18px 22px -16px rgba(130, 225, 255, .20);
+  --elev-2: 0 26px 56px rgba(4, 26, 78, .38), 0 6px 18px rgba(4, 26, 78, .22), 0 24px 28px -16px rgba(130, 225, 255, .26);
+  --elev-s: 0 4px 14px rgba(4, 26, 78, .22), 0 1px 4px rgba(4, 26, 78, .10);
+}
+
+/* BASE + SPECULAR layers:
+   cursor hot spot / main highlight / secondary glint (breaks symmetry) /
+   cool bounce light on the far side / vertical cyan wash / grain / tint */
+.glass { --tint: rgba(34, 78, 122, .16); }
+.lite  { --tint: rgba(48, 90, 130, .24); }
+.glass, .lite, .btn.prime, .btn.prime:hover {
+  background:
+    radial-gradient(340px circle at var(--mx, 50%) var(--my, -30%), rgba(235, 252, 255, .24), transparent 62%),
+    radial-gradient(78% 54% at var(--sx, 28%) var(--sy, 6%), rgba(236, 252, 255, .30), rgba(236, 252, 255, .06) 55%, transparent 74%),
+    radial-gradient(34% 22% at calc(var(--sx, 28%) + 22%) calc(var(--sy, 6%) + 10%), rgba(255, 255, 255, .22), transparent 100%),
+    radial-gradient(120% 70% at calc(100% - var(--sx, 28%)) calc(100% - var(--sy, 6%)), rgba(120, 215, 255, .20), transparent 70%),
+    linear-gradient(180deg, rgba(190, 235, 255, .16), rgba(190, 235, 255, .02) 40%, rgba(30, 90, 170, .10)),
+    var(--noise-soft),
+    var(--tint, rgba(34, 78, 122, .16));
+}
+.btn.prime:active { background-color: rgba(255, 255, 255, .20); }
+
+/* EDGE layer: a conic rim that is brightest toward the lamp (--la), has a cooler
+   bounce on the opposite side, a darker lower edge, and still ignites under the cursor */
+.glass::before, .lite::before {
+  padding: 1.5px;
+  background:
+    radial-gradient(150px circle at var(--mx, 50%) var(--my, -40%), rgba(240, 253, 255, .95), transparent 70%),
+    conic-gradient(from var(--la, 315deg) at 50% 50%,
+      rgba(240, 253, 255, .95) 0deg, rgba(190, 240, 255, .38) 38deg, rgba(255, 255, 255, .03) 92deg,
+      rgba(255, 255, 255, .03) 150deg, rgba(150, 225, 255, .50) 180deg, rgba(255, 255, 255, .03) 214deg,
+      rgba(255, 255, 255, .03) 268deg, rgba(190, 240, 255, .38) 322deg, rgba(240, 253, 255, .95) 360deg),
+    linear-gradient(0deg, rgba(6, 38, 110, .34), transparent 46%);
+}
+
+/* convex buttons */
+.btn.glass, .btn.glass.prime { box-shadow: var(--inner-btn), var(--elev-1); }
+.btn.glass:hover, .btn.glass.prime:hover { box-shadow: var(--inner-btn), var(--elev-2); }
+
+/* keep the accessibility / no-backdrop fallbacks working over the new background */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass, .btn.prime, .btn.prime:hover { background: rgba(46, 80, 116, .88); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .lite, .btn.prime, .btn.prime:hover { background: rgba(46, 80, 116, .94); }
+}
+
+
+/*LIQUID GLASS v3: when the WebGL lens is running (html.gl) it paints the refracted,
+  tinted fill and the reflections, so the CSS surface keeps only grain, rim and shadows.*/
+.gl .glass, .gl .btn.prime, .gl .btn.prime:hover {
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  background: var(--noise-soft);
+}
+.gl .btn.prime:active { background-color: rgba(255, 255, 255, .20); }
+
+
+/*BUDGET-PHONE TIER
+   Applies on phones / touch screens only; desktop is untouched.
+   Add ?fx=high to the URL to see the old full-cost version on a phone for comparison.*/
+@media (max-width: 760px), (hover: none) and (pointer: coarse) {
+
+  /* lighter shadow recipe (vars must be redefined together because they reference each other) */
+  html:not(.hifx) {
+    --inner:
+      inset 0 1px 0 rgba(232, 252, 255, .50),
+      inset 0 -1px 0 rgba(8, 40, 110, .20),
+      inset 2px 3px 8px -4px rgba(150, 230, 255, .45),
+      inset -2px -3px 8px -4px rgba(120, 150, 255, .32),
+      inset 0 -10px 16px -10px rgba(160, 225, 255, .22);
+    --inner-s:
+      inset 0 1px 0 rgba(232, 252, 255, .55),
+      inset 0 -1px 0 rgba(8, 40, 110, .16),
+      inset 1px 2px 4px -3px rgba(150, 230, 255, .50);
+    --inner-btn: var(--inner), inset 0 7px 10px -6px rgba(240, 253, 255, .26);
+    --elev-1: 0 8px 22px rgba(4, 26, 78, .26), 0 1px 4px rgba(4, 26, 78, .14);
+    --elev-2: var(--elev-1);
+    --elev-s: 0 3px 8px rgba(4, 26, 78, .20);
+  }
+
+  /* wallpaper: fixed height (no resize with the toolbar), own layer, painted once */
+  html:not(.hifx) .wall {
+    inset: auto; top: 0; left: 0; width: 100%;
+    height: 100vh; height: 100lvh;
+    contain: strict; transform: translateZ(0);
+  }
+  /* static viewport units: dvh re-layouts the page when the toolbar slides */
+  html:not(.hifx) body { min-height: 100vh; min-height: 100svh; }
+  html:not(.hifx) .page { min-height: calc(100vh - 92px); min-height: calc(100svh - 92px); }
+
+  /* GLASS: no live blur, baked tint instead (3 gradient layers instead of 7) */
+  html:not(.hifx) .glass,
+  html:not(.hifx) .btn.prime,
+  html:not(.hifx) .btn.prime:hover {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    background:
+      radial-gradient(80% 55% at 28% 6%, rgba(236, 252, 255, .30), rgba(236, 252, 255, .05) 55%, transparent 74%),
+      linear-gradient(180deg, rgba(190, 235, 255, .18), rgba(190, 235, 255, .02) 42%, rgba(30, 90, 170, .12)),
+      rgba(40, 88, 134, .30);
+  }
+  /* the floating nav is the only element that really passes over content: keep a cheap real blur */
+  html:not(.hifx) .nav-pill.glass {
+    -webkit-backdrop-filter: blur(10px) saturate(170%); backdrop-filter: blur(10px) saturate(170%);
+    background:
+      radial-gradient(80% 90% at 28% 0%, rgba(236, 252, 255, .28), transparent 72%),
+      linear-gradient(180deg, rgba(190, 235, 255, .16), rgba(30, 90, 170, .10)),
+      rgba(40, 88, 134, .22);
+  }
+
+  /* version tiles (30+ of them): flat painted glass, no blur, no mask rim */
+  html:not(.hifx) .lite {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, .24), rgba(255, 255, 255, .06) 50%, rgba(255, 255, 255, .10)),
+      rgba(50, 98, 144, .34);
+    box-shadow: inset 0 1px 0 rgba(232, 252, 255, .45), inset 0 -1px 0 rgba(8, 40, 110, .16), 0 3px 10px rgba(4, 26, 78, .20);
+  }
+  html:not(.hifx) .lite::before { display: none; }
+  html:not(.hifx) .ver .go { box-shadow: inset 0 1px 0 rgba(232, 252, 255, .5); }
+  html:not(.hifx) .ver { animation: tileIn .28s ease-out backwards; animation-delay: calc(min(var(--i, 0), 8) * 18ms); }
+  @keyframes tileIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* blurred text-shadow is expensive to raster on lots of text: tighter, cheaper */
+  html:not(.hifx) body { text-shadow: 0 1px 3px rgba(8, 36, 70, .22); }
+  html:not(.hifx) .hero h1,
+  html:not(.hifx) .page-head h1,
+  html:not(.hifx) .widget .w-num { text-shadow: 0 2px 12px rgba(8, 40, 80, .30); }
+  html:not(.hifx) .btn.prime, html:not(.hifx) .btn.prime:hover { text-shadow: 0 1px 3px rgba(8, 36, 70, .22); }
+
+  /* animated counters: fixed-width digits, no reflow while they count */
+  .widget .w-num { font-variant-numeric: tabular-nums; }
+
+  /* rotating footer note: fade only, no width/height transition (that was a layout every frame) */
+  html:not(.hifx) .note-clip { transition: none; }
+}
