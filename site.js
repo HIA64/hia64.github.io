@@ -151,7 +151,15 @@
   if (fx === 'flat') return;
   const coarse = matchMedia('(pointer: coarse)').matches;
   const root = document.documentElement;
-  if (coarse && fx !== 'high') return;   /* phones use the baked CSS material: nothing to compute on scroll */
+  /* phones: the WebGL lens now runs here too.
+     ?fx=high  -> force it
+     ?fx=css / ?fx=low -> never (baked CSS material)
+     default   -> on unless the device looks weak (<=4 GB RAM or <=4 cores) */
+  const weak = (navigator.deviceMemory && navigator.deviceMemory <= 4) ||
+               (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+  const mobileGL = coarse && (fx === 'high' || (fx !== 'css' && fx !== 'low' && !weak));
+  if (coarse && !mobileGL) return;       /* weak phones keep the baked CSS material */
+  if (mobileGL) root.classList.add('hifx', 'mgl');   /* hifx switches the budget CSS off, mgl adds the light mobile tweaks */
 
   /*A. light direction for the CSS rim*/
   const LX = .16, LY = -.30, lastA = new WeakMap();
@@ -186,7 +194,7 @@
   schedule();
 
   /*B. WebGL lens*/
-  if (coarse || fx === 'css' || matchMedia('(prefers-reduced-transparency: reduce)').matches) return;
+  if (fx === 'css' || matchMedia('(prefers-reduced-transparency: reduce)').matches) return;
 
   const MAT = [
     ['.nav-pill',    { bezel: 12, str: 9,  curve: 1.7, disp: .05, tint: .16, spec: 1.00, tilt: 1.0, sat: 1.35 }],
@@ -211,7 +219,11 @@
   ];
 
   const VS = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
-  const FS = `precision highp float;
+  const FS = `#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
 uniform sampler2D uWall; uniform vec2 uRes, uView, uPtr, uLight, uTilt; uniform float uDpr, uRadius;
 uniform vec4 uRect, uM1, uM2; uniform vec3 uTint;
 float sdBox(vec2 p, vec2 b, float r){ vec2 q = abs(p) - b + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
@@ -271,6 +283,7 @@ void main(){
     const cv = document.createElement('canvas');
     cv.id = 'lgl'; cv.setAttribute('aria-hidden', 'true');
     cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none';
+    if (coarse) { cv.style.height = '100vh'; cv.style.height = '100lvh'; }
     const gl = cv.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false });
     if (!gl) return;
     const mk = (type, src) => {
@@ -342,7 +355,7 @@ void main(){
 
     function resize() {
       const vr = wall.getBoundingClientRect();
-      W = vr.width; H = vr.height; dpr = Math.min(devicePixelRatio || 1, 2);
+      W = vr.width; H = vr.height; dpr = Math.min(devicePixelRatio || 1, coarse ? 1.5 : 2);
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
       gl.viewport(0, 0, cv.width, cv.height);
       paintWall(); collect();
@@ -387,7 +400,11 @@ void main(){
     cv.addEventListener('webglcontextlost', e => { e.preventDefault(); root.classList.remove('gl'); cv.remove(); });
     addEventListener('pointermove', e => { if (e.pointerType !== 'touch') { ptr.x = e.clientX; ptr.y = e.clientY; } }, { passive: true });
     document.documentElement.addEventListener('pointerleave', () => { ptr.x = ptr.y = -1e4; });
-    let rt = 0; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 120); });
+    let rt = 0, lastRW = innerWidth;
+    addEventListener('resize', () => {
+      if (coarse && innerWidth === lastRW) return;   /* only the URL bar moved */
+      lastRW = innerWidth; clearTimeout(rt); rt = setTimeout(resize, 120);
+    });
     new MutationObserver(() => { clearTimeout(rt); rt = setTimeout(collect, 60); }).observe(document.body, { childList: true, subtree: true });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(resize);
     resize(); requestAnimationFrame(frame);

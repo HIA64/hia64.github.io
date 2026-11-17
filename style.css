@@ -905,3 +905,26 @@ body { overflow-x: clip; -webkit-tap-highlight-color: transparent; }
   /* rotating footer note: fade only, no width/height transition (that was a layout every frame) */
   html:not(.hifx) .note-clip { transition: none; }
 }
+
+@media (max-width: 760px), (hover: none) and (pointer: coarse) {
+  html.mgl .wall {
+    inset: auto; top: 0; left: 0; width: 100%;
+    height: 100vh; height: 100lvh;
+    contain: strict; transform: translateZ(0);
+  }
+  html.mgl body { min-height: 100vh; min-height: 100svh; }
+  html.mgl .page { min-height: calc(100vh - 92px); min-height: calc(100svh - 92px); }
+
+  /* version tiles are not drawn by the lens*/
+  html.mgl .lite {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, .24), rgba(255, 255, 255, .06) 50%, rgba(255, 255, 255, .10)),
+      rgba(50, 98, 144, .34);
+    box-shadow: inset 0 1px 0 rgba(232, 252, 255, .45), inset 0 -1px 0 rgba(8, 40, 110, .16), 0 3px 10px rgba(4, 26, 78, .20);
+  }
+  html.mgl .lite::before { display: none; }
+  html.mgl .ver .go { box-shadow: inset 0 1px 0 rgba(232, 252, 255, .5); }
+  html.mgl .note-clip { transition: none; }
+  html.mgl .widget .w-num { font-variant-numeric: tabular-nums; }
+}
