@@ -28,14 +28,6 @@
     el.style.setProperty('--my', (e.clientY - r.top) + 'px');
   }, { passive: true });
 
-  /*manual switches for testing: ?fx=low (painted glass) / ?fx=high (full-cost glass on phones)*/
-  (function () {
-    let fx = '';
-    try { fx = new URLSearchParams(location.search).get('fx') || ''; } catch (e) {}
-    if (fx === 'low') document.documentElement.classList.add('lowfx');
-    if (fx === 'high') document.documentElement.classList.add('hifx');
-  })();
-
   /*tab puck: liquid stretch while it slides*/
   const lens = document.getElementById('lens');
   if (lens && !reduce) {
@@ -48,15 +40,29 @@
     });
   }
 
-  /*nav shrinks on scroll, like ios 26 Safari*/
+  /*nav: folds to logo + name while you scroll down, opens again on scroll up or a tap on it*/
   const nav = document.querySelector('.topnav');
   if (nav) {
-    let compact = false;
+    const rest = nav.querySelector('.nav-rest');
+    const measure = () => { if (rest) rest.style.setProperty('--rest-w', (rest.scrollWidth + 8) + 'px'); };
+    let compact = false, dir = 0, lastY = window.scrollY, anchor = lastY;
+    const set = v => { if (v !== compact) { compact = v; nav.classList.toggle('compact', v); } };
     const onScroll = () => {
-      const now = window.scrollY > 30;
-      if (now !== compact) { compact = now; nav.classList.toggle('compact', compact); }
+      const y = Math.max(0, window.scrollY), d = y > lastY ? 1 : y < lastY ? -1 : 0;
+      if (d && d !== dir) { dir = d; anchor = lastY; }       /* anchor = where the direction last changed */
+      lastY = y;
+      if (y <= 30) { set(false); return; }
+      if (dir > 0 && y - anchor > 40) set(true);
+      else if (dir < 0 && anchor - y > 24) set(false);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
+    nav.addEventListener('click', e => {
+      if (compact && e.target.closest('.nav-pill')) { set(false); dir = 0; anchor = lastY; }
+    });
+    measure();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+    let navW = innerWidth;
+    window.addEventListener('resize', () => { if (innerWidth !== navW) { navW = innerWidth; measure(); } });
     onScroll();
   }
 
@@ -143,23 +149,32 @@
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 })();
 
-/*?fx=flat  -> no extras
-?fx=css -> CSS only (no WebGL) */
+/*Lite-mode lever (potato) in the nav. The class `potato` is set early by the inline script in <head>
+  (?fx=low or the saved choice), so the page never flashes the wrong style.*/
 (function () {
-  let fx = '';
-  try { fx = new URLSearchParams(location.search).get('fx') || ''; } catch (e) {}
-  if (fx === 'flat') return;
-  const coarse = matchMedia('(pointer: coarse)').matches;
+  const root = document.documentElement, KEY = 'tia-lite';
+  const sw = document.querySelector('.lite-toggle');
+  if (!sw) return;
+  const show = () => sw.setAttribute('aria-checked', root.classList.contains('potato') ? 'true' : 'false');
+  show();
+  sw.addEventListener('click', () => {
+    const on = !root.classList.contains('potato');
+    root.classList.toggle('potato', on);
+    try { if (on) localStorage.setItem(KEY, '1'); else localStorage.removeItem(KEY); } catch (e) {}
+    if (!on && /[?&]fx=low/.test(location.search)) {
+      try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
+    }
+    show();
+    document.dispatchEvent(new Event('tia-mode'));
+  });
+})();
+
+/*Glass rendering: the WebGL lens by default (desktop and phones), or lite CSS blur in potato mode.*/
+(function () {
   const root = document.documentElement;
-  /* phones: the WebGL lens now runs here too.
-     ?fx=high  -> force it
-     ?fx=css / ?fx=low -> never (baked CSS material)
-     default   -> on unless the device looks weak (<=4 GB RAM or <=4 cores) */
-  const weak = (navigator.deviceMemory && navigator.deviceMemory <= 4) ||
-               (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
-  const mobileGL = coarse && (fx === 'high' || (fx !== 'css' && fx !== 'low' && !weak));
-  if (coarse && !mobileGL) return;       /* weak phones keep the baked CSS material */
-  if (mobileGL) root.classList.add('hifx', 'mgl');   /* hifx switches the budget CSS off, mgl adds the light mobile tweaks */
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  const docMode = coarse;                 /* touch: the canvas lives IN the page and scrolls with it (no trailing) */
+  const lite = () => root.classList.contains('potato');
 
   /*A. light direction for the CSS rim*/
   const LX = .16, LY = -.30, lastA = new WeakMap();
@@ -183,6 +198,7 @@
   }
   let q = 0, t = 0;
   function schedule() {
+    if (lite()) return;
     if (coarse) { clearTimeout(t); t = setTimeout(light, 120); return; }
     if (q) return;
     q = requestAnimationFrame(() => { q = 0; light(); });
@@ -194,7 +210,7 @@
   schedule();
 
   /*B. WebGL lens*/
-  if (fx === 'css' || matchMedia('(prefers-reduced-transparency: reduce)').matches) return;
+  const noGL = matchMedia('(prefers-reduced-transparency: reduce)').matches;
 
   const MAT = [
     ['.nav-pill',    { bezel: 12, str: 9,  curve: 1.7, disp: .05, tint: .16, spec: 1.00, tilt: 1.0, sat: 1.35 }],
@@ -224,10 +240,10 @@ precision highp float;
 #else
 precision mediump float;
 #endif
-uniform sampler2D uWall; uniform vec2 uRes, uView, uPtr, uLight, uTilt; uniform float uDpr, uRadius;
+uniform sampler2D uWall; uniform vec2 uRes, uView, uPtr, uLight, uTilt; uniform float uDpr, uRadius, uScroll;
 uniform vec4 uRect, uM1, uM2; uniform vec3 uTint;
 float sdBox(vec2 p, vec2 b, float r){ vec2 q = abs(p) - b + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
-vec3 wall(vec2 p){ return texture2D(uWall, clamp(p / uView, 0., 1.)).rgb; }
+vec3 wall(vec2 p){ return texture2D(uWall, clamp((p - vec2(0., uScroll)) / uView, 0., 1.)).rgb; }
 void main(){
   vec2 p = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y) / uDpr;
   vec2 hb = uRect.zw * .5, c = uRect.xy + hb, q = p - c;
@@ -282,8 +298,9 @@ void main(){
     if (!wall) return;
     const cv = document.createElement('canvas');
     cv.id = 'lgl'; cv.setAttribute('aria-hidden', 'true');
-    cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none';
-    if (coarse) { cv.style.height = '100vh'; cv.style.height = '100lvh'; }
+    cv.style.cssText = docMode
+      ? 'position:absolute;left:0;top:0;width:100%;z-index:0;pointer-events:none'   /* scrolls with the page */
+      : 'position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none';
     const gl = cv.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false });
     if (!gl) return;
     const mk = (type, src) => {
@@ -301,7 +318,7 @@ void main(){
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, 'a');
     gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    const U = {}; ['uWall', 'uRes', 'uView', 'uPtr', 'uLight', 'uTilt', 'uDpr', 'uRadius', 'uRect', 'uM1', 'uM2', 'uTint']
+    const U = {}; ['uWall', 'uRes', 'uView', 'uPtr', 'uLight', 'uTilt', 'uDpr', 'uRadius', 'uScroll', 'uRect', 'uM1', 'uM2', 'uTint']
       .forEach(n => U[n] = gl.getUniformLocation(prog, n));
     const tex = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -313,8 +330,9 @@ void main(){
     gl.enable(gl.SCISSOR_TEST); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.clearColor(0, 0, 0, 0);
     wall.after(cv);
+    if (docMode) root.classList.add('mgl');
 
-    let W = 0, H = 0, dpr = 1, list = [], dirty = true, shown = false, lastKey = '';
+    let alive = true, fr = 0, W = 0, H = 0, CH = 0, dpr = 1, list = [], dirty = true, shown = false, lastKey = '';
     const ptr = { x: -1e4, y: -1e4 }, tilt = { x: 0, y: 0 };
 
     /* repaint the CSS wallpaper (gradient + blobs + scrim) into a texture at half resolution */
@@ -346,7 +364,8 @@ void main(){
     }
 
     function collect() {
-      list = Array.from(document.querySelectorAll('.glass')).map(el => {
+      if (!alive) return;
+      list = Array.from(document.querySelectorAll(docMode ? '.glass:not(.nav-pill)' : '.glass')).map(el => {
         const m = Object.assign({}, DEF, (MAT.find(([s]) => el.matches(s)) || [0, {}])[1]);
         return { el, m, r: parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0 };
       });
@@ -354,29 +373,34 @@ void main(){
     }
 
     function resize() {
+      if (!alive) return;
       const vr = wall.getBoundingClientRect();
-      W = vr.width; H = vr.height; dpr = Math.min(devicePixelRatio || 1, coarse ? 1.5 : 2);
-      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      W = vr.width; H = vr.height;
+      CH = docMode ? Math.max(2, Math.ceil(document.body.getBoundingClientRect().height)) : H;
+      dpr = Math.min(devicePixelRatio || 1, coarse ? 1.5 : 2);
+      if (docMode) { dpr = Math.max(.75, Math.min(dpr, 4096 / CH)); cv.style.height = CH + 'px'; }
+      cv.width = Math.round(W * dpr); cv.height = Math.round(CH * dpr);
       gl.viewport(0, 0, cv.width, cv.height);
       paintWall(); collect();
     }
 
     function draw() {
-      const vis = [], key = [ptr.x | 0, ptr.y | 0, (tilt.x * 200) | 0, (tilt.y * 200) | 0];
+      const sy = docMode ? (window.scrollY || 0) : 0, M = docMode ? 500 : 0;
+      const vis = [], key = [ptr.x | 0, ptr.y | 0, (tilt.x * 200) | 0, (tilt.y * 200) | 0, sy | 0];
       for (const it of list) {
         const rc = it.el.getBoundingClientRect();
-        if (rc.width < 2 || rc.bottom < 0 || rc.top > H || rc.right < 0 || rc.left > W) continue;
+        if (rc.width < 2 || rc.bottom < -M || rc.top > H + M || rc.right < 0 || rc.left > W) continue;
         vis.push([it, rc]); key.push(rc.left.toFixed(1), rc.top.toFixed(1), rc.width.toFixed(1), rc.height.toFixed(1));
       }
       const k = key.join(',');
       if (k === lastKey && !dirty) return;
       lastKey = k; dirty = false;
       gl.disable(gl.SCISSOR_TEST); gl.clear(gl.COLOR_BUFFER_BIT); gl.enable(gl.SCISSOR_TEST);
-      gl.uniform2f(U.uRes, cv.width, cv.height); gl.uniform2f(U.uView, W, H); gl.uniform1f(U.uDpr, dpr);
+      gl.uniform2f(U.uRes, cv.width, cv.height); gl.uniform2f(U.uView, W, H); gl.uniform1f(U.uDpr, dpr); gl.uniform1f(U.uScroll, sy);
       gl.uniform2f(U.uPtr, ptr.x, ptr.y); gl.uniform2f(U.uTilt, tilt.x, tilt.y);
       for (const [it, rc] of vis) {
         const m = it.m, sc = it.el.offsetWidth ? rc.width / it.el.offsetWidth : 1;
-        gl.uniform4f(U.uRect, rc.left, rc.top, rc.width, rc.height);
+        gl.uniform4f(U.uRect, rc.left, rc.top + sy, rc.width, rc.height);
         gl.uniform1f(U.uRadius, it.r * sc);
         gl.uniform4f(U.uM1, m.bezel * sc, m.str * sc, m.curve, m.disp);
         gl.uniform4f(U.uM2, m.tint, m.spec, m.tilt, m.sat);
@@ -384,7 +408,7 @@ void main(){
         let lx = LX * W - (rc.left + rc.width / 2), ly = LY * H - (rc.top + rc.height / 2);
         const ll = Math.hypot(lx, ly) || 1; gl.uniform2f(U.uLight, lx / ll, ly / ll);
         const x0 = Math.max(0, Math.floor((rc.left - 2) * dpr)), x1 = Math.min(cv.width, Math.ceil((rc.right + 2) * dpr));
-        const y0 = Math.max(0, Math.floor((H - rc.bottom - 2) * dpr)), y1 = Math.min(cv.height, Math.ceil((H - rc.top + 2) * dpr));
+        const y0 = Math.max(0, Math.floor((CH - rc.bottom - sy - 2) * dpr)), y1 = Math.min(cv.height, Math.ceil((CH - rc.top - sy + 2) * dpr));
         gl.scissor(x0, y0, Math.max(0, x1 - x0), Math.max(0, y1 - y0));
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       }
@@ -392,22 +416,120 @@ void main(){
     }
 
     function frame() {
+      if (!alive) return;
       const tx = ptr.x > -1e3 ? (ptr.x / W - .5) * 2 : 0, ty = ptr.y > -1e3 ? (ptr.y / H - .5) * 2 : 0;
       tilt.x += (tx - tilt.x) * .12; tilt.y += (ty - tilt.y) * .12;
-      draw(); requestAnimationFrame(frame);
+      draw(); fr = requestAnimationFrame(frame);
     }
 
-    cv.addEventListener('webglcontextlost', e => { e.preventDefault(); root.classList.remove('gl'); cv.remove(); });
-    addEventListener('pointermove', e => { if (e.pointerType !== 'touch') { ptr.x = e.clientX; ptr.y = e.clientY; } }, { passive: true });
-    document.documentElement.addEventListener('pointerleave', () => { ptr.x = ptr.y = -1e4; });
-    let rt = 0, lastRW = innerWidth;
-    addEventListener('resize', () => {
+    const onLost = e => { e.preventDefault(); alive = false; root.classList.remove('gl', 'mgl'); cv.remove(); };
+    const onMove = e => { if (e.pointerType !== 'touch') { ptr.x = e.clientX; ptr.y = e.clientY; } };
+    const onLeave = () => { ptr.x = ptr.y = -1e4; };
+    let rt = 0, mt = 0, ht = 0, lastRW = innerWidth;
+    const onResize = () => {
       if (coarse && innerWidth === lastRW) return;   /* only the URL bar moved */
       lastRW = innerWidth; clearTimeout(rt); rt = setTimeout(resize, 120);
-    });
-    new MutationObserver(() => { clearTimeout(rt); rt = setTimeout(collect, 60); }).observe(document.body, { childList: true, subtree: true });
+    };
+    cv.addEventListener('webglcontextlost', onLost);
+    addEventListener('pointermove', onMove, { passive: true });
+    root.addEventListener('pointerleave', onLeave);
+    addEventListener('resize', onResize);
+    const mo = new MutationObserver(() => { clearTimeout(mt); mt = setTimeout(collect, 60); });
+    mo.observe(document.body, { childList: true, subtree: true });
+    let ro = null;
+    if (docMode && window.ResizeObserver) {
+      ro = new ResizeObserver(() => {
+        if (Math.abs(Math.ceil(document.body.getBoundingClientRect().height) - CH) <= 2) return;
+        clearTimeout(ht); ht = setTimeout(resize, 100);
+      });
+      ro.observe(document.body);
+    }
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(resize);
-    resize(); requestAnimationFrame(frame);
+    resize(); fr = requestAnimationFrame(frame);
+
+    return function stop() {
+      alive = false; cancelAnimationFrame(fr);
+      clearTimeout(rt); clearTimeout(mt); clearTimeout(ht);
+      removeEventListener('pointermove', onMove); root.removeEventListener('pointerleave', onLeave);
+      removeEventListener('resize', onResize);
+      mo.disconnect(); if (ro) ro.disconnect();
+      cv.remove(); root.classList.remove('gl', 'mgl');
+      const ext = gl.getExtension('WEBGL_lose_context'); if (ext) ext.loseContext();
+    };
   }
-  startGL();
+
+  /* start / stop the lens when the mode changes (the lever fires 'tia-mode') */
+  let stopGL = null;
+  function sync() {
+    if (lite() || noGL) { if (stopGL) { stopGL(); stopGL = null; } return; }
+    if (!stopGL) stopGL = startGL() || null;
+    schedule();
+  }
+  document.addEventListener('tia-mode', sync);
+  sync();
+})();
+
+
+/*social dock on phones: two pages (4 icons, then 3), swipe or tap the dots; the dock resizes to the page*/
+(function () {
+  const dock = document.querySelector('.dock');
+  const track = dock && dock.querySelector('.dock-track');
+  const pages = track ? track.querySelectorAll('.dock-page') : [];
+  const dots = document.querySelectorAll('.dock-dots button');
+  if (pages.length < 2) return;
+  const mq = matchMedia('(max-width: 520px)');
+  let idx = 0, w0 = 0, w1 = 0, drag = null, moved = false;
+
+  const paint = p => {                      /* p: 0 = page 1, 1 = page 2 (fractions while dragging) */
+    dock.style.width = (w0 + (w1 - w0) * p) + 'px';
+    track.style.transform = 'translateX(' + (-w0 * p) + 'px)';
+  };
+  const mark = i => dots.forEach((d, k) => d.classList.toggle('on', k === i));
+  function go(i) { idx = i; dock.classList.remove('dragging'); paint(i); mark(i); }
+  function layout() {
+    if (!mq.matches) { dock.style.width = ''; track.style.transform = ''; return; }
+    w0 = pages[0].offsetWidth; w1 = pages[1].offsetWidth;
+    dock.classList.add('dragging'); paint(idx);               /* re-fit without animating */
+    requestAnimationFrame(() => dock.classList.remove('dragging'));
+  }
+
+  dock.addEventListener('pointerdown', e => {
+    if (!mq.matches || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    drag = { x: e.clientX, id: e.pointerId, on: false, p: idx, last: idx, dx: 0 };
+    moved = false;
+  });
+  dock.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x;
+    if (!drag.on) {
+      if (Math.abs(dx) < 6) return;
+      drag.on = true; moved = true; dock.classList.add('dragging');
+      try { dock.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+    drag.dx = dx; drag.last = Math.min(1, Math.max(0, drag.p - dx / w0));
+    paint(drag.last);
+  });
+  const end = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag; drag = null;
+    if (!d.on) return;
+    let to = d.last > .5 ? 1 : 0;
+    if (Math.abs(d.dx) > 28) to = d.dx < 0 ? 1 : 0;
+    go(to);
+    setTimeout(() => { moved = false; }, 0);
+  };
+  dock.addEventListener('pointerup', end);
+  dock.addEventListener('pointercancel', end);
+  dock.addEventListener('click', e => { if (moved) { e.preventDefault(); e.stopPropagation(); } }, true);/* a swipe is not a tap */
+  dots.forEach((d, k) => d.addEventListener('click', () => go(k)));
+  dock.addEventListener('focusin', e => { 
+    if (!mq.matches) return;
+    const pg = e.target.closest && e.target.closest('.dock-page');
+    const k = pg ? Array.prototype.indexOf.call(pages, pg) : -1;
+    dock.scrollLeft = 0;
+    if (k > -1 && k !== idx) go(k);
+  });
+  addEventListener('resize', layout);
+  if (mq.addEventListener) mq.addEventListener('change', layout);
+  layout(); mark(0);
 })();
